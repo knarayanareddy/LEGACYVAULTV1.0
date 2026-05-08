@@ -1,0 +1,221 @@
+import { FC, useState } from 'react';
+import {
+  Wallet, Shield, Heart, Send, ArrowUpRight, ArrowDownRight,
+  Clock, AlertTriangle, CheckCircle2, TrendingUp, Activity,
+  ChevronRight, ExternalLink
+} from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import type { 
+  VaultSummaryResponse, 
+  PortfolioSnapshotView, 
+  VaultAssetView, 
+  ActivityLogView, 
+  NotificationView 
+} from '../types/api';
+
+interface DashboardProps {
+  summary: VaultSummaryResponse;
+  portfolio: PortfolioSnapshotView[];
+  assets: VaultAssetView[];
+  activity: ActivityLogView[];
+  notifications: NotificationView[];
+  onInitiateUnlock: () => void;
+}
+
+import InitiateUnlockModal from './modals/InitiateUnlockModal';
+
+const activityIcons: Record<string, { icon: any; color: string }> = {
+  deposit: { icon: ArrowDownRight, color: 'text-emerald-400 bg-emerald-400/10' },
+  withdraw: { icon: ArrowUpRight, color: 'text-rose-400 bg-rose-400/10' },
+  guardian_approve: { icon: Shield, color: 'text-vault-400 bg-vault-400/10' },
+  check_in: { icon: CheckCircle2, color: 'text-cyan-400 bg-cyan-400/10' },
+  unlock_init: { icon: AlertTriangle, color: 'text-amber-400 bg-amber-400/10' },
+  distribution: { icon: Send, color: 'text-purple-400 bg-purple-400/10' },
+  freeze: { icon: AlertTriangle, color: 'text-rose-400 bg-rose-400/10' },
+  config_change: { icon: Activity, color: 'text-slate-400 bg-slate-400/10' },
+};
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const days = Math.floor(diff / 86400000);
+  if (days > 0) return `${days}d ago`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours > 0) return `${hours}h ago`;
+  return 'Just now';
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#131832] border border-vault-800/30 rounded-xl px-4 py-3 shadow-xl">
+        <p className="text-sm font-semibold text-slate-200">{label}</p>
+        <p className="text-sm text-vault-400 font-mono">${payload[0].value.toLocaleString()}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const DashboardPanel: FC<DashboardProps> = ({
+  summary, portfolio, assets, activity, notifications, onInitiateUnlock
+}) => {
+  const [isUnlockOpen, setIsUnlockOpen] = useState(false);
+  const checkInPercent = Math.max(0, 100 - (summary.daysSinceCheckIn / (summary.inactivityThreshold / 86400)) * 100);
+  const checkInColor = summary.checkInHealth === 'healthy' ? '#22c55e' : summary.checkInHealth === 'warning' ? '#f59e0b' : '#f43f5e';
+
+  const statCards = [
+    { label: 'Total Vault Value', value: `$${summary.totalUsdValue.toLocaleString()}`, change: '+0.0%', up: true, icon: Wallet, gradient: 'from-vault-500 to-indigo-600', shadow: 'shadow-vault-500/20' },
+    { label: 'Guardians Active', value: `${summary.approvedGuardians} / ${summary.totalGuardians}`, change: `Threshold: ${summary.guardianThreshold}`, up: true, icon: Shield, gradient: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
+    { label: 'Beneficiaries', value: `${summary.totalBeneficiaries}`, change: `${summary.totalBps.toLocaleString()} bps allocated`, up: true, icon: Heart, gradient: 'from-purple-500 to-pink-600', shadow: 'shadow-purple-500/20' },
+    { label: 'Last Check-in', value: `${summary.daysSinceCheckIn} days`, change: `Threshold: ${summary.inactivityThreshold / 86400} days`, up: true, icon: Clock, gradient: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
+  ];
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <InitiateUnlockModal
+        isOpen={isUnlockOpen}
+        onClose={() => setIsUnlockOpen(false)}
+        onConfirm={onInitiateUnlock}
+      />
+
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Vault Overview</h2>
+          <p className="text-sm text-slate-400 mt-1">Monitor your digital estate at a glance</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {summary.status === 'locked' && (
+            <button
+              onClick={() => setIsUnlockOpen(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-amber-500/30 transition-all flex items-center gap-2 active:scale-95"
+            >
+              <Shield className="w-4 h-4" /> Initiate Unlock
+            </button>
+          )}
+          <div className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+            summary.status === 'locked' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+            summary.status === 'frozen' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+            'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+          }`}>
+            <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: checkInColor }} />
+            {summary.status}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className="glass-card rounded-2xl p-5 animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center shadow-lg ${card.shadow}`}>
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-white tracking-tight">{card.value}</p>
+              <p className="text-xs text-slate-500 mt-1">{card.label}</p>
+              {card.label === 'Last Check-in' && (
+                <div className="mt-3 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${checkInPercent}%`, backgroundColor: checkInColor }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 glass-card rounded-2xl p-6">
+          <h3 className="text-base font-semibold text-white mb-6">Portfolio Value</h3>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={portfolio}>
+                <defs>
+                  <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5c7cfa" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#5c7cfa" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.1)" />
+                <XAxis dataKey="timestamp" stroke="#475569" fontSize={11} tickLine={false} />
+                <YAxis stroke="#475569" fontSize={11} tickLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="totalUsdValue" stroke="#5c7cfa" strokeWidth={2.5} fill="url(#portfolioGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="text-base font-semibold text-white mb-4">Asset Allocation</h3>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={assets} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="usdValue" nameKey="symbol" strokeWidth={0}>
+                  {assets.map((_, index) => (
+                    <Cell key={index} fill={`hsl(${index * 45}, 70%, 60%)`} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-4">
+            {assets.slice(0, 5).map((asset, index) => (
+              <div key={asset.symbol} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${index * 45}, 70%, 60%)` }} />
+                  <span className="text-xs text-slate-400">{asset.symbol}</span>
+                </div>
+                <span className="text-xs font-mono text-slate-300">${asset.usdValue.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="text-base font-semibold text-white mb-5">Recent Activity</h3>
+          <div className="space-y-3">
+            {activity.slice(0, 5).map((item, i) => {
+              const meta = activityIcons[item.activityType] || activityIcons.config_change;
+              const Icon = meta.icon;
+              return (
+                <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors animate-fade-in" style={{ animationDelay: `${i * 60}ms` }}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${meta.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-200 truncate">{item.description}</p>
+                    <p className="text-[11px] text-slate-500">{timeAgo(item.timestamp)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="text-base font-semibold text-white mb-5">Notifications</h3>
+          <div className="space-y-3">
+            {notifications.slice(0, 5).map((n, i) => (
+              <div key={n.id} className={`p-3 rounded-xl transition-colors animate-fade-in ${n.read ? 'bg-transparent' : 'bg-white/[0.03] border border-white/5'}`} style={{ animationDelay: `${i * 60}ms` }}>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-200">{n.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
+                  </div>
+                  {!n.read && <div className="w-2 h-2 rounded-full bg-vault-500 flex-shrink-0 mt-2" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPanel;

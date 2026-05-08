@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   FileText, Upload, Search, ExternalLink,
-  Lock, Download, Trash2, Eye, FileSpreadsheet, File
+  Lock, Download, Trash2, Eye, FileSpreadsheet, File, X
 } from 'lucide-react';
 import type { VaultDocument } from '../types';
+import { encryptFile, decryptBlob } from '../utils/crypto';
 
 interface DocumentsPanelProps {
   documents: VaultDocument[];
@@ -27,19 +28,111 @@ function timeAgo(ts: number): string {
 }
 
 export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
+  const [documentsList, setDocumentsList] = useState<VaultDocument[]>(documents);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal states
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [docType, setDocType] = useState('will');
+  const [passphrase, setPassphrase] = useState('');
+  const [encrypting, setEncrypting] = useState(false);
 
-  const filteredDocs = documents.filter(doc => {
+  // Decryption download states
+  const [showDecryptModal, setShowDecryptModal] = useState(false);
+  const [activeDecryptDoc, setActiveDecryptDoc] = useState<VaultDocument | null>(null);
+  const [decryptPassphrase, setDecryptPassphrase] = useState('');
+  const [decryptError, setDecryptError] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredDocs = documentsList.filter(doc => {
     const matchesFilter = filter === 'all' || doc.type === filter;
     const matchesSearch = !searchQuery || doc.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const totalSize = documents.reduce((sum, d) => {
+  const totalSize = documentsList.reduce((sum, d) => {
     const num = parseFloat(d.size);
     return sum + num;
   }, 0);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile || !passphrase) return;
+
+    try {
+      setEncrypting(true);
+      
+      // Perform AES-GCM Client-Side Symmetric Encryption
+      const { ciphertextBlob, hash } = await encryptFile(selectedFile, passphrase);
+      
+      // Create local URL for downloading/viewing mock
+      const encryptedBlobUrl = URL.createObjectURL(ciphertextBlob);
+
+      const newDoc: VaultDocument = {
+        id: Math.random().toString(36).substring(2, 9),
+        type: docType as any,
+        name: selectedFile.name,
+        size: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`,
+        hash: hash.substring(0, 16),
+        uri: encryptedBlobUrl, // Anchor with encrypted blob URL
+        uploadedAt: Date.now(),
+        encrypted: true,
+        icon: docType === 'will' ? '📜' : docType === 'letter' ? '✉️' : '📄',
+      };
+
+      setDocumentsList(prev => [newDoc, ...prev]);
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      setPassphrase('');
+    } catch (err) {
+      console.error('Symmetric Encryption Failed:', err);
+    } finally {
+      setEncrypting(false);
+    }
+  };
+
+  const triggerDownload = async () => {
+    if (!activeDecryptDoc || !decryptPassphrase) return;
+
+    try {
+      setDecryptError('');
+      
+      // Fetch encrypted blob from URI
+      const response = await fetch(activeDecryptDoc.uri);
+      const encryptedBlob = await response.blob();
+
+      // Decrypt symmetrically using passphrase
+      const decryptedBlob = await decryptBlob(encryptedBlob, decryptPassphrase, 'application/octet-stream');
+      
+      const downloadUrl = URL.createObjectURL(decryptedBlob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = activeDecryptDoc.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      setShowDecryptModal(false);
+      setDecryptPassphrase('');
+      setActiveDecryptDoc(null);
+    } catch (err) {
+      setDecryptError('Invalid passphrase or corrupted ciphertext.');
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    setDocumentsList(prev => prev.filter(d => d.id !== id));
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -49,7 +142,10 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
           <h2 className="text-2xl font-bold text-white tracking-tight">Documents</h2>
           <p className="text-sm text-slate-400 mt-1">Encrypted document storage with on-chain hash anchoring</p>
         </div>
-        <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-vault-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-vault-500/30 transition-all flex items-center gap-2 active:scale-95">
+        <button
+          onClick={() => setShowUploadModal(true)}
+          className="px-4 py-2 rounded-xl bg-gradient-to-r from-vault-600 to-purple-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-vault-500/30 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+        >
           <Upload className="w-4 h-4" /> Upload Document
         </button>
       </div>
@@ -63,7 +159,7 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
             </div>
             <p className="text-sm font-semibold text-white">Total Documents</p>
           </div>
-          <p className="text-2xl font-bold text-white font-mono">{documents.length}</p>
+          <p className="text-2xl font-bold text-white font-mono">{documentsList.length}</p>
         </div>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-3">
@@ -72,7 +168,7 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
             </div>
             <p className="text-sm font-semibold text-white">Encrypted</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-400 font-mono">{documents.filter(d => d.encrypted).length}</p>
+          <p className="text-2xl font-bold text-emerald-400 font-mono">{documentsList.filter(d => d.encrypted).length}</p>
         </div>
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-3">
@@ -81,7 +177,7 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
             </div>
             <p className="text-sm font-semibold text-white">Storage Used</p>
           </div>
-          <p className="text-2xl font-bold text-white font-mono">{totalSize.toFixed(1)} MB</p>
+          <p className="text-2xl font-bold text-white font-mono">{totalSize.toFixed(2)} MB</p>
         </div>
       </div>
 
@@ -138,19 +234,27 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-[10px] text-slate-500">{doc.size}</span>
                 <span className="text-[10px] text-slate-500">·</span>
-                <span className="text-[10px] text-slate-500">{timeAgo(doc.uploadedAt)}</span>
+                <span className="text-[10px] text-slate-500">timeAgo: {timeAgo(doc.uploadedAt)}</span>
                 <span className="text-[10px] text-slate-500">·</span>
-                <span className="text-[10px] text-slate-600 font-mono truncate max-w-[120px]">{doc.hash}</span>
+                <span className="text-[10px] text-slate-600 font-mono truncate max-w-[120px]" title={doc.hash}>Hash: {doc.hash}</span>
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              <button className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-vault-400 transition-colors" title="View">
-                <Eye className="w-4 h-4" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-emerald-400 transition-colors" title="Download">
+              <button
+                onClick={() => {
+                  setActiveDecryptDoc(doc);
+                  setShowDecryptModal(true);
+                }}
+                className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                title="Decrypt and Download"
+              >
                 <Download className="w-4 h-4" />
               </button>
-              <button className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-rose-400 transition-colors" title="Delete">
+              <button
+                onClick={() => handleDelete(doc.id)}
+                className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                title="Delete"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
               <ExternalLink className="w-4 h-4 text-slate-600 ml-1 cursor-pointer hover:text-vault-400 transition-colors" />
@@ -182,6 +286,104 @@ export default function DocumentsPanel({ documents }: DocumentsPanelProps) {
           </div>
         </div>
       </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="glass-card max-w-md w-full rounded-2xl border-white/10 p-6 space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Upload Encrypted Document</h3>
+              <button onClick={() => setShowUploadModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUploadSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Select File</label>
+                <input
+                  type="file"
+                  required
+                  onChange={handleFileChange}
+                  className="w-full text-xs text-slate-300 bg-white/5 rounded-xl border border-white/10 p-2.5 focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-400">Document Type</label>
+                  <select
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                    className="w-full text-xs text-slate-300 bg-slate-900 rounded-xl border border-white/10 p-2.5 focus:outline-none"
+                  >
+                    <option value="will">Will</option>
+                    <option value="letter">Letter</option>
+                    <option value="legal">Legal</option>
+                    <option value="identity">Identity</option>
+                    <option value="financial">Financial</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-400">Passphrase</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Symmetric Secret"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="w-full text-xs text-slate-300 bg-white/5 rounded-xl border border-white/10 p-2.5 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={encrypting}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-vault-600 to-purple-600 text-white font-semibold text-sm hover:shadow-lg hover:shadow-vault-500/30 transition-all cursor-pointer active:scale-95"
+              >
+                {encrypting ? 'Deriving Key & Encrypting...' : 'Encrypt & Upload'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Decrypt & Download Modal */}
+      {showDecryptModal && activeDecryptDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="glass-card max-w-md w-full rounded-2xl border-white/10 p-6 space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Decrypt Document</h3>
+              <button onClick={() => setShowDecryptModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-xs text-slate-400">
+                To decrypt <strong className="text-white">{activeDecryptDoc.name}</strong>, please enter the symmetric passphrase that was used during upload.
+              </p>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-400">Passphrase</label>
+                <input
+                  type="password"
+                  placeholder="Enter Secret"
+                  value={decryptPassphrase}
+                  onChange={(e) => setDecryptPassphrase(e.target.value)}
+                  className="w-full text-xs text-slate-300 bg-white/5 rounded-xl border border-white/10 p-2.5 focus:outline-none"
+                />
+              </div>
+              {decryptError && (
+                <p className="text-xs text-rose-400 font-semibold">{decryptError}</p>
+              )}
+              <button
+                onClick={triggerDownload}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-vault-600 to-purple-600 text-white font-semibold text-sm hover:shadow-lg hover:shadow-vault-500/30 transition-all cursor-pointer active:scale-95"
+              >
+                Decrypt & Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

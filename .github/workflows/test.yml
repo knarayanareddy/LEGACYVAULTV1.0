@@ -1,0 +1,76 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  anchor-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Solana
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked
+
+      - name: Run Anchor tests
+        working-directory: ./legacyvault
+        run: |
+          npm install
+          anchor test
+
+  api-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: legacyvault_test
+        ports:
+          - 5433:5432
+      redis:
+        image: redis:7
+        ports:
+          - 6380:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install API dependencies
+        working-directory: ./api
+        run: npm ci
+      - name: Run API tests
+        working-directory: ./api
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5433/legacyvault_test
+          REDIS_URL: redis://localhost:6380
+          JWT_SECRET: test-secret
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install frontend dependencies
+        working-directory: ./dashboard
+        run: npm ci
+      - name: Run frontend tests
+        working-directory: ./dashboard
+        run: npm test -- --run

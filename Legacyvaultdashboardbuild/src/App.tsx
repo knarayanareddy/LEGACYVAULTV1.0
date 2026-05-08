@@ -10,6 +10,7 @@ import DocumentsPanel from './components/DocumentsPanel';
 import SettingsPanel from './components/SettingsPanel';
 import { useVaultState } from './hooks/useVaultState';
 import { Search, Bell, Shield } from 'lucide-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 export default function App() {
   const {
@@ -170,6 +171,8 @@ export default function App() {
                 </span>
               )}
             </button>
+
+            <WalletMultiButton className="!bg-vault-600 hover:!bg-vault-500 !rounded-xl !text-sm !h-9 !font-sans" />
 
             {/* Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">

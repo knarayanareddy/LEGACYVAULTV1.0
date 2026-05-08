@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VAULTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Vault {
+  pubkey              String   @id
+  ownerPubkey         String
+  status              String   // active | unlocking | executing | distributed | frozen
+  createdAt           BigInt
+  lastCheckIn         BigInt
+  inactivityThreshold BigInt
+  timelockDuration    BigInt
+  guardianThreshold   Int      @db.SmallInt
+  guardianCount       Int      @db.SmallInt   @default(0)
+  beneficiaryCount    Int      @db.SmallInt   @default(0)
+  totalBps            Int      @db.SmallInt   @default(0)
+  subscriptionTier    String   @default("free")
+  subscriptionExpiry  BigInt?
+  docHash             String?
+  docUri              String?
+  docUpdatedAt        BigInt?
+  panicFreeze         Boolean  @default(false)
+  frozenBy            String?
+  frozenAt            BigInt?
+  arbiter             String?
+  updatedAt           DateTime @default(now()) @updatedAt
+
+  guardians      Guardian[]
+  beneficiaries  Beneficiary[]
+  unlockSessions UnlockSession[]
+  documents      Document[]
+  activities     ActivityLog[]
+  notifications  Notification[]
+
+  @@index([ownerPubkey])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GUARDIANS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Guardian {
+  id              String   @id @default(uuid())
+  vaultPubkey     String
+  guardianWallet  String
+  role            String   // personal | professional | delegate
+  status          String   // pending | active | inactive | removed
+  addedAt         BigInt
+  acceptedAt      BigInt?
+  removedAt       BigInt?
+
+  vault           Vault    @relation(fields: [vaultPubkey], references: [pubkey], onDelete: Cascade)
+  approvals       GuardianApproval[]
+
+  @@unique([vaultPubkey, guardianWallet])
+  @@index([guardianWallet])
+}
+
+model GuardianApproval {
+  id                  String   @id @default(uuid())
+  unlockSessionPubkey String
+  guardianId          String
+  guardianWallet      String
+  approvedAt          BigInt
+  txSignature         String
+
+  unlockSession       UnlockSession @relation(fields: [unlockSessionPubkey], references: [pubkey], onDelete: Cascade)
+  guardian            Guardian      @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@unique([unlockSessionPubkey, guardianId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BENEFICIARIES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Beneficiary {
+  id                 String   @id @default(uuid())
+  vaultPubkey        String
+  beneficiaryWallet  String
+  shareBps           Int      @db.SmallInt
+  active             Boolean  @default(true)
+  addedAt            BigInt
+  updatedAt          BigInt
+
+  vault              Vault    @relation(fields: [vaultPubkey], references: [pubkey], onDelete: Cascade)
+  assetRules         AssetRule[]
+
+  @@unique([vaultPubkey, beneficiaryWallet])
+  @@index([beneficiaryWallet])
+}
+
+model AssetRule {
+  id                 String   @id @default(uuid())
+  beneficiaryId      String
+  vaultPubkey        String
+  mint               String
+  mode               String   // pro-rata | fixed-bps | entire-to-beneficiary
+  fixedBps           Int?     @db.SmallInt
+
+  beneficiary        Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+
+  @@unique([beneficiaryId, mint])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNLOCK SESSIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model UnlockSession {
+  pubkey            String   @id
+  vaultPubkey       String
+  status            String   // proposed | approved | executing | executed | cancelled | disputed
+  initiatedBy       String
+  initiatedAt       BigInt
+  approvedAt        BigInt?
+  timelockStartedAt BigInt?
+  timelockEndsAt    BigInt?
+  executedAt        BigInt?
+  cancelledAt       BigInt?
+  approvalCount     Int      @db.SmallInt @default(0)
+
+  vault             Vault    @relation(fields: [vaultPubkey], references: [pubkey], onDelete: Cascade)
+  approvals         GuardianApproval[]
+  solDistSession    SolDistributionSession?
+  splDistSessions   SplDistributionSession[]
+  disputes          DisputeCase[]
+
+  @@index([vaultPubkey])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DISTRIBUTION SESSIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model SolDistributionSession {
+  pubkey              String   @id
+  unlockSessionPubkey String   @unique
+  vaultPubkey         String
+  totalBeneficiaries  Int      @db.SmallInt
+  cursor              Int      @db.SmallInt @default(0)
+  totalLamports       BigInt
+  distributedLamports BigInt   @default(0)
+  initializedAt       BigInt
+  completedAt         BigInt?
+
+  unlockSession       UnlockSession @relation(fields: [unlockSessionPubkey], references: [pubkey], onDelete: Cascade)
+  batches             DistributionBatch[]
+}
+
+model SplDistributionSession {
+  pubkey              String   @id
+  unlockSessionPubkey String
+  vaultPubkey         String
+  mint                String
+  totalBeneficiaries  Int      @db.SmallInt
+  cursor              Int      @db.SmallInt @default(0)
+  totalAmount         BigInt
+  distributedAmount   BigInt   @default(0)
+  createMissingAtas   Boolean  @default(false)
+  initializedAt       BigInt
+  completedAt         BigInt?
+
+  unlockSession       UnlockSession @relation(fields: [unlockSessionPubkey], references: [pubkey], onDelete: Cascade)
+  batches             DistributionBatch[]
+
+  @@unique([unlockSessionPubkey, mint])
+}
+
+model DistributionBatch {
+  id                String   @id @default(uuid())
+  solSessionPubkey  String?
+  splSessionPubkey  String?
+  sessionType       String   // sol | spl
+  mint              String?
+  startIndex        Int      @db.SmallInt
+  batchSize         Int      @db.SmallInt
+  status            String   @default("pending") // pending | processing | completed | failed
+  txSignature       String?
+  processedAt       BigInt?
+  errorMessage      String?
+
+  solSession        SolDistributionSession? @relation(fields: [solSessionPubkey], references: [pubkey], onDelete: Cascade)
+  splSession        SplDistributionSession? @relation(fields: [splSessionPubkey], references: [pubkey], onDelete: Cascade)
+}
+
+model DisputeCase {
+  pubkey              String   @id
+  unlockSessionPubkey String
+  vaultPubkey         String
+  openedBy            String
+  status              String   // open | resolved_cancel | resolved_proceed
+  openedAt            BigInt
+  resolvedAt          BigInt?
+  resolvedBy          String?
+
+  unlockSession       UnlockSession @relation(fields: [unlockSessionPubkey], references: [pubkey], onDelete: Cascade)
+
+  @@index([unlockSessionPubkey])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Document {
+  id              String   @id @default(uuid())
+  vaultPubkey     String
+  documentType    String   // will | letter | legal | identity | financial | other
+  name            String
+  sizeBytes       BigInt
+  hash            String
+  storageUri      String
+  storageBackend  String   // arweave | shadow_drive | s3
+  encrypted       Boolean  @default(true)
+  uploadedAt      DateTime @default(now())
+  revoked         Boolean  @default(false)
+  revokedAt       DateTime?
+  onChainTx       String?
+
+  vault           Vault    @relation(fields: [vaultPubkey], references: [pubkey], onDelete: Cascade)
+
+  @@index([vaultPubkey])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTIVITY & NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id              String   @id @default(uuid())
+  vaultPubkey     String
+  activityType    String
+  description     String
+  actorWallet     String?
+  txSignature     String?
+  timestamp       BigInt
+  metadata        Json?
+
+  vault           Vault    @relation(fields: [vaultPubkey], references: [pubkey], onDelete: Cascade)
+
+  @@index([vaultPubkey, timestamp])
+}
+
+model Notification {
+  id                String   @id @default(uuid())
+  vaultPubkey       String?
+  targetWallet      String
+  notificationType  String
+  title             String
+  message           String
+  severity          String   @default("info") // info | warning | critical
+  read              Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  deliveredVia      String[] @default([])
+  deliveryStatus    String   @default("pending") // pending | sent | failed
+  vault             Vault?   @relation(fields: [vaultPubkey], references: [pubkey], onDelete: SetNull)
+
+  @@index([targetWallet, read, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PORTFOLIO
+// ─────────────────────────────────────────────────────────────────────────────
+
+model PortfolioSnapshot {
+  id              String   @id @default(uuid())
+  vaultPubkey     String
+  totalUsdValue   Decimal  @db.Decimal(20, 6)
+  breakdown       Json     // { sol, spl, nft, position }
+  capturedAt      DateTime @default(now())
+
+  @@index([vaultPubkey, capturedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER PROFILES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model UserProfile {
+  wallet            String   @id
+  name              String?
+  avatarUrl         String?
+  email             String?
+  emailVerified     Boolean  @default(false)
+  smsNumber         String?
+  smsVerified       Boolean  @default(false)
+  pushTokens        String[] @default([])
+  notificationPrefs Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFESSIONAL GUARDIANS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ProGuardianProfile {
+  wallet              String   @id
+  kycStatus           String   @default("unverified") // unverified | pending | verified | revoked
+  reputationScore     Int      @db.SmallInt @default(0)
+  name                String?
+  profileUri          String?
+  activeVaultCount    Int      @default(0)
+  totalVaultsServed   Int      @default(0)
+  registeredAt        BigInt
+  kycUpdatedAt        BigInt?
+  onChainSyncedAt     DateTime?
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBSCRIPTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Subscription {
+  vaultPubkey     String   @id
+  tier            String   @default("free") // free | pro | enterprise
+  startedAt       BigInt
+  expiresAt       BigInt
+  autoRenew       Boolean  @default(false)
+  lastPaymentAt   BigInt?
+  paymentTx       String?
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuthNonce {
+  wallet     String   @id
+  nonce      String
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+}
