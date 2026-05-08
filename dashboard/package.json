@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo 'No tests defined'"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",

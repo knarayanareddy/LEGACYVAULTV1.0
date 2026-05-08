@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "db:seed": "tsx scripts/init-db.ts"
+    "db:seed": "tsx scripts/init-db.ts",
+    "test": "echo 'No tests defined'"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",

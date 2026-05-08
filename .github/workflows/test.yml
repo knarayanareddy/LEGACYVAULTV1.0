@@ -19,12 +19,12 @@ jobs:
 
       - name: Install Anchor
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
 
       - name: Run Anchor tests
         working-directory: ./legacyvault
         run: |
-          npm install
+          npm install --legacy-peer-deps
           anchor test
 
   api-tests:
@@ -51,7 +51,7 @@ jobs:
           node-version: '20'
       - name: Install API dependencies
         working-directory: ./api
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Run API tests
         working-directory: ./api
         run: npm test
@@ -70,7 +70,7 @@ jobs:
           node-version: '20'
       - name: Install frontend dependencies
         working-directory: ./dashboard
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Run frontend tests
         working-directory: ./dashboard
         run: npm test -- --run
