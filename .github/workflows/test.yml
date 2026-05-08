@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Solana
-        uses: solana-labs/actions/setup-solana@v1
+        uses: metadaoproject/setup-solana@v1.0
         with:
-          solana-version: '1.18.17'
+          solana-cli-version: '1.18.17'
 
       - name: Install Anchor
         run: |
