@@ -12,6 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev
+
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.2
         with:
@@ -19,6 +24,7 @@ jobs:
 
       - name: Verify Solana
         run: |
+          ls -l /home/runner/.local/share/solana/install/active_release/bin/
           solana --version
           cargo-build-sbf --version
 
