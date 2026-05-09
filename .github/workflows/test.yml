@@ -19,8 +19,7 @@ jobs:
 
       - name: Install Anchor
         run: |
-          curl -sSfL https://github.com/coral-xyz/anchor/releases/download/v0.30.1/anchor-v0.30.1-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          sudo mv anchor /usr/local/bin/
+          npm install -g @coral-xyz/anchor-cli@0.30.1
 
       - name: Run Anchor tests
         working-directory: ./legacyvault
