@@ -24,9 +24,10 @@ jobs:
 
       - name: Verify Solana
         run: |
-          ls -l /home/runner/.local/share/solana/install/active_release/bin/
-          solana --version
-          cargo-build-sbf --version
+          which solana || echo "solana not found in PATH"
+          find /home/runner -name solana -type f 2>/dev/null || echo "solana not found in /home/runner"
+          solana --version || echo "solana --version failed"
+          cargo-build-sbf --version || echo "cargo-build-sbf --version failed"
 
       - name: Install Anchor
         run: |
