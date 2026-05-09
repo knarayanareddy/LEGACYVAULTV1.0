@@ -498,6 +498,674 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "removeGuardian",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "guardianEntry",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        165,
+        150,
+        148,
+        237,
+        143,
+        242,
+        211,
+        56
+      ]
+    },
+    {
+      "name": "acceptGuardian",
+      "accounts": [
+        {
+          "name": "guardian",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "guardianEntry",
+          "writable": true
+        },
+        {
+          "name": "globalConfig"
+        },
+        {
+          "name": "proGuardianProfile",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        109,
+        71,
+        139,
+        71,
+        94,
+        133,
+        129,
+        19
+      ]
+    },
+    {
+      "name": "addLivenessDelegate",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "delegate",
+          "signer": true
+        },
+        {
+          "name": "guardianEntry",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        153,
+        29,
+        162,
+        149,
+        26,
+        217,
+        13,
+        207
+      ]
+    },
+    {
+      "name": "removeLivenessDelegate",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "delegate"
+        },
+        {
+          "name": "guardianEntry",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        114,
+        201,
+        171,
+        176,
+        148,
+        0,
+        255,
+        73
+      ]
+    },
+    {
+      "name": "setDocumentCommitment",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "docCommitment",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "docHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "docUri",
+          "type": "string"
+        }
+      ],
+      "discriminator": [
+        222,
+        223,
+        88,
+        2,
+        40,
+        8,
+        44,
+        28
+      ]
+    },
+    {
+      "name": "revokeDocumentCommitment",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "docCommitment",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        140,
+        245,
+        216,
+        207,
+        59,
+        224,
+        123,
+        5
+      ]
+    },
+    {
+      "name": "initiateUnlock",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        86,
+        20,
+        34,
+        163,
+        72,
+        14,
+        200,
+        246
+      ]
+    },
+    {
+      "name": "approveUnlock",
+      "accounts": [
+        {
+          "name": "guardian",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "guardianEntry"
+        },
+        {
+          "name": "guardianApproval",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        238,
+        192,
+        62,
+        179,
+        126,
+        13,
+        200,
+        109
+      ]
+    },
+    {
+      "name": "cancelUnlock",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        118,
+        181,
+        106,
+        1,
+        174,
+        55,
+        4,
+        217
+      ]
+    },
+    {
+      "name": "openDispute",
+      "accounts": [
+        {
+          "name": "guardian",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "guardianEntry"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        251,
+        142,
+        87,
+        222,
+        159,
+        110,
+        126,
+        54
+      ]
+    },
+    {
+      "name": "resolveDispute",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "resolved",
+          "type": "bool"
+        }
+      ],
+      "discriminator": [
+        221,
+        227,
+        222,
+        124,
+        120,
+        39,
+        230,
+        68
+      ]
+    },
+    {
+      "name": "initSolDistribution",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "solDistribution",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        20,
+        204,
+        199,
+        15,
+        92,
+        249,
+        195,
+        49
+      ]
+    },
+    {
+      "name": "executeSolBatch",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "vaultAuthority",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "solDistribution",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "executeBatchArgs"
+            }
+          }
+        }
+      ],
+      "discriminator": [
+        242,
+        201,
+        157,
+        140,
+        84,
+        24,
+        18,
+        217
+      ]
+    },
+    {
+      "name": "initSplDistribution",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "splDistribution",
+          "writable": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "vaultTokenAccount"
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        86,
+        244,
+        42,
+        23,
+        186,
+        106,
+        55,
+        235
+      ]
+    },
+    {
+      "name": "executeSplBatch",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "vaultAuthority",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        },
+        {
+          "name": "splDistribution",
+          "writable": true
+        },
+        {
+          "name": "vaultTokenAccount",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "executeSplBatchArgs"
+            }
+          }
+        }
+      ],
+      "discriminator": [
+        86,
+        89,
+        97,
+        109,
+        216,
+        73,
+        113,
+        11
+      ]
+    },
+    {
+      "name": "finalizeUnlock",
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "unlockSession",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        89,
+        186,
+        94,
+        28,
+        40,
+        235,
+        129,
+        241
+      ]
+    },
+    {
+      "name": "setSubscription",
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "subscriptionState",
+          "writable": true
+        },
+        {
+          "name": "globalConfig"
+        },
+        {
+          "name": "feeReceiver",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "tier",
+          "type": {
+            "defined": {
+              "name": "subscriptionTier"
+            }
+          }
+        }
+      ],
+      "discriminator": [
+        95,
+        168,
+        92,
+        169,
+        224,
+        183,
+        135,
+        193
+      ]
+    },
+    {
+      "name": "updateProGuardianProfile",
+      "accounts": [
+        {
+          "name": "guardian",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "proGuardianProfile",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ],
+      "discriminator": [
+        249,
+        215,
+        114,
+        178,
+        128,
+        185,
+        28,
+        195
+      ]
     }
   ],
   "accounts": [
