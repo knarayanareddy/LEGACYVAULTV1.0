@@ -1,7 +1,7 @@
 {
   "name": "legacyvault-api",
   "version": "1.0.0",
-  "description": "LegacyVault API Gateway",
+  "description": "LegacyVault API Gateway - Hardened Production Edition",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
