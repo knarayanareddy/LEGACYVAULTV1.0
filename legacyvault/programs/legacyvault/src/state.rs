@@ -170,7 +170,8 @@ pub struct Vault {
     pub subscription_tier: SubscriptionTier,
 
     // ── Future expansion padding ─────────────────────────────────────────────
-    pub _reserved: [u8; 64],
+    pub active_beneficiary_count: u16,
+    pub _reserved: [u8; 62],
 }
 
 impl Vault {
@@ -369,6 +370,7 @@ pub struct SolDistributionSession {
     pub distributed_lamports: u64,
     pub initialized_at: i64,
     pub completed_at: Option<i64>,
+    pub last_processed_pubkey: Option<Pubkey>,
     pub bump: u8,
     pub _reserved: [u8; 8],
 }
@@ -400,6 +402,7 @@ pub struct SplDistributionSession {
     pub create_missing_atas: bool,
     pub initialized_at: i64,
     pub completed_at: Option<i64>,
+    pub last_processed_pubkey: Option<Pubkey>,
     pub bump: u8,
     pub _reserved: [u8; 8],
 }
@@ -517,4 +520,34 @@ pub struct ProfessionalGuardianBond {
 
 impl ProfessionalGuardianBond {
     pub const SIZE: usize = PRO_GUARDIAN_BOND_SPACE;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[account]
+#[derive(Debug)]
+pub struct MintRuleSet {
+    pub vault: Pubkey,
+    pub mint: Pubkey,
+    pub entire_to: Option<Pubkey>,
+    pub fixed_rules: Vec<(Pubkey, u16)>, // Up to 10 elements
+    pub bump: u8,
+    pub _reserved: [u8; 16],
+}
+
+impl MintRuleSet {
+    pub const SIZE: usize = MINT_RULE_SET_SPACE;
+}
+
+#[account]
+#[derive(Debug)]
+pub struct OwnerState {
+    pub owner: Pubkey,
+    pub vault_count: u8,
+    pub bump: u8,
+    pub _reserved: [u8; 8],
+}
+
+impl OwnerState {
+    pub const SIZE: usize = OWNER_STATE_SPACE;
 }

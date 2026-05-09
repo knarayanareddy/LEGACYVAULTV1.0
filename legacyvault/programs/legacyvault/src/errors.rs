@@ -153,4 +153,12 @@ pub enum LegacyVaultError {
     AccountAlreadyInitialized,
     #[msg("Fee amount provided does not match the required fee.")]
     InvalidFeePaid,
+    #[msg("NFT distributions require a registered entire-to-beneficiary rule.")]
+    NftRequiresEntireToBeneficiaryRule,
+    #[msg("Multiple entire-to-beneficiary rules found for the same mint.")]
+    MultipleEntireToRules,
+    #[msg("Fixed rules sum exceeds the 10,000 basis points limit.")]
+    FixedRulesSumExceedsLimit,
+    #[msg("The first beneficiary wallet in this batch does not satisfy monotonic progress.")]
+    InvalidMonotonicOrder,
 }

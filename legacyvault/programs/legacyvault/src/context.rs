@@ -88,7 +88,6 @@ pub struct UnpauseProgram<'info> {
 // ═══════════════════════════════════════════════════════════════════════════════
 // MODULE B — VAULT LIFECYCLE
 // ═══════════════════════════════════════════════════════════════════════════════
-
 #[derive(Accounts)]
 #[instruction(args: CreateVaultArgs)]
 pub struct CreateVault<'info> {
@@ -96,38 +95,11 @@ pub struct CreateVault<'info> {
     pub owner: Signer<'info>,
 
     #[account(
-        init,
-        payer = owner,
-        space = Vault::SIZE,
-        seeds = [b"vault", owner.key().as_ref(), &[args.vault_nonce]],
-        bump,
-        constraint = !global_config.paused @ LegacyVaultError::ProgramPaused,
-    )]
-    pub vault: Account<'info, Vault>,
-
-    /// CHECK: Vault authority PDA — holds all vault assets (SOL + token accounts).
-    /// Validated by seeds; does not store program data.
-    #[account(
-        seeds = [b"vault_auth", vault.key().as_ref()],
-        bump,
-    )]
-    pub vault_authority: UncheckedAccount<'info>,
-
-    #[account(
-        init,
-        payer = owner,
-        space = SubscriptionState::SIZE,
-        seeds = [b"subscription", vault.key().as_ref()],
-        bump,
-    )]
-    pub subscription_state: Account<'info, SubscriptionState>,
-
-    #[account(
         seeds = [b"global_config"],
         bump  = global_config.bump,
         constraint = !global_config.paused @ LegacyVaultError::ProgramPaused,
     )]
-    pub global_config: Account<'info, GlobalConfig>,
+    pub global_config: Box<Account<'info, GlobalConfig>>,
 
     /// CHECK: Must match global_config.fee_receiver
     #[account(
@@ -137,9 +109,41 @@ pub struct CreateVault<'info> {
     )]
     pub fee_receiver: UncheckedAccount<'info>,
 
+    #[account(
+        init,
+        payer = owner,
+        space = Vault::SIZE,
+        seeds = [b"vault", owner.key().as_ref(), &[args.vault_nonce]],
+        bump,
+    )]
+    pub vault: Box<Account<'info, Vault>>,
+
+    #[account(
+        seeds = [b"vault_auth", vault.key().as_ref()],
+        bump,
+    )]
+    pub vault_authority: SystemAccount<'info>,
+
+    #[account(
+        init,
+        payer = owner,
+        space = SubscriptionState::SIZE,
+        seeds = [b"subscription", vault.key().as_ref()],
+        bump,
+    )]
+    pub subscription_state: Box<Account<'info, SubscriptionState>>,
+
+    #[account(
+        init_if_needed,
+        payer = owner,
+        space = OwnerState::SIZE,
+        seeds = [b"owner_state", owner.key().as_ref()],
+        bump,
+    )]
+    pub owner_state: Box<Account<'info, OwnerState>>,
+
     pub system_program: Program<'info, System>,
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Accounts)]
@@ -633,13 +637,12 @@ pub struct WithdrawSol<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
-    /// CHECK: Vault authority PDA — source of the SOL.
     #[account(
         mut,
         seeds = [b"vault_auth", vault.key().as_ref()],
         bump  = vault.authority_bump,
     )]
-    pub vault_authority: UncheckedAccount<'info>,
+    pub vault_authority: SystemAccount<'info>,
 
     /// CHECK: Recipient; must be the owner's wallet.
     #[account(
@@ -648,6 +651,13 @@ pub struct WithdrawSol<'info> {
             @ LegacyVaultError::SignerIsNotOwner,
     )]
     pub owner_wallet: UncheckedAccount<'info>,
+
+    #[account(
+        seeds = [b"global_config"],
+        bump  = global_config.bump,
+        constraint = !global_config.paused @ LegacyVaultError::ProgramPaused,
+    )]
+    pub global_config: Account<'info, GlobalConfig>,
 
     pub system_program: Program<'info, System>,
 }
@@ -1125,13 +1135,12 @@ pub struct ExecuteSolBatch<'info> {
     )]
     pub vault: Account<'info, Vault>,
 
-    /// CHECK: Signs the lamport transfer CPI.
     #[account(
         mut,
         seeds = [b"vault_auth", vault.key().as_ref()],
         bump  = vault.authority_bump,
     )]
-    pub vault_authority: UncheckedAccount<'info>,
+    pub vault_authority: SystemAccount<'info>,
 
     #[account(
         seeds = [b"unlock_session", vault.key().as_ref()],
@@ -1152,12 +1161,18 @@ pub struct ExecuteSolBatch<'info> {
     )]
     pub sol_distribution_session: Account<'info, SolDistributionSession>,
 
+    #[account(
+        seeds = [b"global_config"],
+        bump  = global_config.bump,
+        constraint = !global_config.paused @ LegacyVaultError::ProgramPaused,
+    )]
+    pub global_config: Account<'info, GlobalConfig>,
+
     pub system_program: Program<'info, System>,
     // remaining_accounts: [BeneficiaryEntry, BeneficiaryWallet] × batch_size
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-
 #[derive(Accounts)]
 #[instruction(args: InitSplDistributionArgs)]
 pub struct InitSplDistribution<'info> {
@@ -1167,18 +1182,14 @@ pub struct InitSplDistribution<'info> {
             @ LegacyVaultError::SignerIsNotOwner
     )]
     pub owner: Signer<'info>,
-
     #[account(
         mut,
         seeds = [b"vault", vault.owner.as_ref(), &[vault.vault_nonce]],
         bump  = vault.bump,
-        constraint = vault.total_bps == BPS_DENOMINATOR
-            @ LegacyVaultError::SharesNotTenThousand,
         constraint = vault.status != VaultStatus::Frozen
             @ LegacyVaultError::VaultFrozen,
     )]
     pub vault: Box<Account<'info, Vault>>,
-
     /// CHECK: Vault authority — owner of vault_token_account.
     #[account(
         seeds = [b"vault_auth", vault.key().as_ref()],

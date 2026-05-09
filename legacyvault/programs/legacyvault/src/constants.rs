@@ -174,9 +174,9 @@ pub const SOL_DIST_SESSION_SPACE: usize =
     + U64         // distributed_lamports
     + I64         // initialized_at
     + option(I64) // completed_at
+    + option(PUBKEY) // last_processed_pubkey
     + U8          // bump
     + 8;          // _reserved
-// = 8+32+32+1+1+8+8+8+9+1+8 = 116
 
 pub const SPL_DIST_SESSION_SPACE: usize =
     DISC
@@ -190,9 +190,25 @@ pub const SPL_DIST_SESSION_SPACE: usize =
     + BOOL        // create_missing_atas
     + I64         // initialized_at
     + option(I64) // completed_at
+    + option(PUBKEY) // last_processed_pubkey
     + U8          // bump
     + 8;          // _reserved
-// = 8+32+32+32+1+1+8+8+1+8+9+1+8 = 149
+
+pub const MINT_RULE_SET_SPACE: usize =
+    DISC
+    + PUBKEY        // vault
+    + PUBKEY        // mint
+    + option(PUBKEY) // entire_to
+    + 4 + (PUBKEY + U16) * 10 // fixed_rules Vec with max 10 elements
+    + U8            // bump
+    + 16;           // reserved
+
+pub const OWNER_STATE_SPACE: usize =
+    DISC
+    + PUBKEY        // owner
+    + U8            // vault_count
+    + U8            // bump
+    + 8;            // reserved
 
 pub const DISPUTE_CASE_SPACE: usize =
     DISC
