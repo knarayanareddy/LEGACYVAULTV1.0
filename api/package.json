@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "LegacyVault API Gateway",
   "main": "dist/server.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -11,7 +12,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "db:seed": "tsx scripts/init-db.ts",
-    "test": "jest --passWithNoTests"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --passWithNoTests"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",

@@ -1,14 +1,17 @@
-// api/jest.config.js
-module.exports = {
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
-  testMatch: ['**/*.test.ts'],
-  moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
+  moduleNameMapper: {
+    '^nanoid$': 'nanoid/index.js',
+  },
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      useESM: true,
+    }],
+  },
+  extensionsToTreatAsEsm: ['.ts'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(nanoid|@coral-xyz/anchor|@solana/web3.js)/)',
   ],
-  coverageDirectory: 'coverage',
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 };
