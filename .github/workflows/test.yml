@@ -15,7 +15,12 @@ jobs:
       - name: Install Solana
         uses: metadaoproject/setup-solana@v1.2
         with:
-          solana-version: "1.18.26"
+          solana-version: "v1.18.26"
+
+      - name: Verify Solana
+        run: |
+          solana --version
+          cargo-build-sbf --version
 
       - name: Install Anchor
         run: |
