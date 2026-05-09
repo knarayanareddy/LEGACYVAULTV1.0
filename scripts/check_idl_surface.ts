@@ -57,6 +57,10 @@ function check() {
     { name: 'setSubscription', expectedArgs: 1 },
     { name: 'addBeneficiary', expectedArgs: 1 },
     { name: 'initializeGlobalConfig', expectedArgs: 4 },
+    { name: 'depositSol', expectedArgs: 1 },
+    { name: 'depositSpl', expectedArgs: 1 },
+    { name: 'withdrawSol', expectedArgs: 1 },
+    { name: 'withdrawSpl', expectedArgs: 1 },
   ];
 
   for (const check of criticalChecks) {

@@ -187,7 +187,7 @@ const ALL_INSTRUCTIONS = [
       { name: 'vaultAuthority', isMut: true, isSigner: false },
       { name: 'systemProgram', isMut: false, isSigner: false }
     ],
-    args: []
+    args: [{ name: 'lamports', type: 'u64' }]
   },
   {
     name: 'depositSpl',
@@ -201,7 +201,7 @@ const ALL_INSTRUCTIONS = [
       { name: 'tokenProgram', isMut: false, isSigner: false },
       { name: 'systemProgram', isMut: false, isSigner: false }
     ],
-    args: []
+    args: [{ name: 'amount', type: 'u64' }]
   },
   {
     name: 'withdrawSol',
@@ -213,7 +213,7 @@ const ALL_INSTRUCTIONS = [
       { name: 'globalConfig', isMut: false, isSigner: false },
       { name: 'systemProgram', isMut: false, isSigner: false }
     ],
-    args: []
+    args: [{ name: 'lamports', type: 'u64' }]
   },
   {
     name: 'withdrawSpl',
@@ -226,7 +226,7 @@ const ALL_INSTRUCTIONS = [
       { name: 'ownerTokenAccount', isMut: true, isSigner: false },
       { name: 'tokenProgram', isMut: false, isSigner: false }
     ],
-    args: []
+    args: [{ name: 'amount', type: 'u64' }]
   },
   // MODULE F
   {

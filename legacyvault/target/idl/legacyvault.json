@@ -659,7 +659,12 @@
           "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ],
       "discriminator": [
         234,
         37,
@@ -715,7 +720,12 @@
           "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ],
       "discriminator": [
         128,
         125,
@@ -761,7 +771,12 @@
           "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ],
       "discriminator": [
         116,
         28,
@@ -812,7 +827,12 @@
           "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ],
       "discriminator": [
         155,
         116,
