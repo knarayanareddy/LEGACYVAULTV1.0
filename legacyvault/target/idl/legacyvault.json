@@ -8,28 +8,21 @@
   "instructions": [
     {
       "name": "initializeGlobalConfig",
-      "discriminator": [
-        113,
-        216,
-        122,
-        131,
-        225,
-        209,
-        22,
-        55
-      ],
       "accounts": [
         {
           "name": "admin",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "globalConfig",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
@@ -49,470 +42,358 @@
           "name": "subscriptionFeeEnterpriseLamports",
           "type": "u64"
         }
+      ],
+      "discriminator": [
+        83,
+        244,
+        122,
+        173,
+        227,
+        73,
+        120,
+        5
       ]
     },
     {
       "name": "updateGlobalConfig",
-      "discriminator": [
-        19,
-        131,
-        168,
-        121,
-        252,
-        230,
-        208,
-        149
-      ],
       "accounts": [
         {
           "name": "admin",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "globalConfig",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "updateGlobalConfigArgs"
-            }
+            "defined": "updateGlobalConfigArgs"
           }
         }
+      ],
+      "discriminator": [
+        174,
+        232,
+        225,
+        82,
+        106,
+        238,
+        199,
+        238
       ]
     },
     {
       "name": "pauseProgram",
-      "discriminator": [
-        91,
-        86,
-        253,
-        175,
-        66,
-        236,
-        172,
-        124
-      ],
       "accounts": [
         {
           "name": "admin",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "globalConfig",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
-      "args": []
+      "args": [],
+      "discriminator": [
+        234,
+        146,
+        13,
+        165,
+        170,
+        125,
+        51,
+        6
+      ]
     },
     {
       "name": "unpauseProgram",
-      "discriminator": [
-        43,
-        162,
-        233,
-        92,
-        254,
-        62,
-        69,
-        58
-      ],
       "accounts": [
         {
           "name": "admin",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "globalConfig",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
-      "args": []
+      "args": [],
+      "discriminator": [
+        69,
+        228,
+        69,
+        171,
+        233,
+        220,
+        45,
+        170
+      ]
     },
     {
       "name": "createVault",
-      "discriminator": [
-        29,
-        237,
-        247,
-        208,
-        193,
-        82,
-        54,
-        135
-      ],
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "globalConfig"
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "feeReceiver",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "vaultAuthority",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "subscriptionState",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "ownerState",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "createVaultArgs"
-            }
+            "defined": "createVaultArgs"
           }
         }
+      ],
+      "discriminator": [
+        213,
+        3,
+        40,
+        104,
+        98,
+        243,
+        48,
+        64
       ]
     },
     {
       "name": "updateVaultSettings",
-      "discriminator": [
-        41,
-        147,
-        187,
-        85,
-        233,
-        240,
-        48,
-        14
-      ],
       "accounts": [
         {
           "name": "owner",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "updateVaultSettingsArgs"
-            }
+            "defined": "updateVaultSettingsArgs"
           }
         }
+      ],
+      "discriminator": [
+        247,
+        39,
+        68,
+        40,
+        200,
+        254,
+        16,
+        36
       ]
     },
     {
       "name": "freezeVault",
-      "discriminator": [
-        144,
-        211,
-        63,
-        236,
-        97,
-        31,
-        170,
-        175
-      ],
       "accounts": [
         {
           "name": "owner",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
-      "args": []
+      "args": [],
+      "discriminator": [
+        20,
+        187,
+        218,
+        112,
+        4,
+        228,
+        199,
+        3
+      ]
     },
     {
       "name": "unfreezeVault",
-      "discriminator": [
-        145,
-        244,
-        206,
-        234,
-        251,
-        250,
-        116,
-        183
-      ],
       "accounts": [
         {
           "name": "owner",
-          "signer": true
+          "isMut": false,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "optional": true
+          "isMut": false,
+          "isSigner": false
         }
       ],
-      "args": []
+      "args": [],
+      "discriminator": [
+        16,
+        222,
+        18,
+        58,
+        82,
+        25,
+        5,
+        99
+      ]
     },
     {
       "name": "addGuardian",
-      "discriminator": [
-        167,
-        189,
-        170,
-        27,
-        74,
-        240,
-        201,
-        241
-      ],
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "guardianEntry",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "globalConfig"
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "proGuardianProfile",
-          "optional": true
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "addGuardianArgs"
-            }
+            "defined": "addGuardianArgs"
           }
         }
+      ],
+      "discriminator": [
+        114,
+        73,
+        168,
+        213,
+        246,
+        148,
+        30,
+        40
       ]
     },
     {
       "name": "acceptGuardianInvitation",
-      "discriminator": [
-        105,
-        104,
-        20,
-        9,
-        215,
-        91,
-        133,
-        25
-      ],
       "accounts": [
         {
           "name": "guardian",
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "guardianEntry",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         }
       ],
-      "args": []
-    },
-    {
-      "name": "addBeneficiary",
+      "args": [],
       "discriminator": [
-        105,
-        214,
-        106,
-        141,
-        180,
-        166,
-        123,
-        238
-      ],
-      "accounts": [
-        {
-          "name": "owner",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "vault",
-          "writable": true
-        },
-        {
-          "name": "beneficiaryEntry",
-          "writable": true
-        },
-        {
-          "name": "globalConfig"
-        },
-        {
-          "name": "systemProgram"
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": {
-            "defined": {
-              "name": "addBeneficiaryArgs"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "depositSol",
-      "discriminator": [
-        108,
-        81,
-        78,
-        117,
-        125,
+        132,
+        40,
+        61,
+        185,
+        44,
         155,
-        56,
-        200
-      ],
-      "accounts": [
-        {
-          "name": "depositor",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "vault"
-        },
-        {
-          "name": "vaultAuthority",
-          "writable": true
-        },
-        {
-          "name": "systemProgram"
-        }
-      ],
-      "args": [
-        {
-          "name": "lamports",
-          "type": "u64"
-        }
+        21,
+        151
       ]
-    },
-    {
-      "name": "withdrawSol",
-      "discriminator": [
-        145,
-        131,
-        74,
-        136,
-        65,
-        137,
-        42,
-        38
-      ],
-      "accounts": [
-        {
-          "name": "owner",
-          "signer": true
-        },
-        {
-          "name": "vault"
-        },
-        {
-          "name": "vaultAuthority",
-          "writable": true
-        },
-        {
-          "name": "ownerWallet",
-          "writable": true
-        },
-        {
-          "name": "globalConfig"
-        },
-        {
-          "name": "systemProgram"
-        }
-      ],
-      "args": [
-        {
-          "name": "lamports",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "checkIn",
-      "discriminator": [
-        209,
-        253,
-        4,
-        217,
-        250,
-        241,
-        207,
-        50
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "signer": true
-        },
-        {
-          "name": "vault",
-          "writable": true
-        },
-        {
-          "name": "livenessDelegate",
-          "optional": true
-        }
-      ],
-      "args": []
     },
     {
       "name": "removeGuardian",
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "vault"
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "guardianEntry",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -528,42 +409,451 @@
       ]
     },
     {
-      "name": "acceptGuardian",
+      "name": "setGuardianThreshold",
       "accounts": [
         {
-          "name": "guardian",
-          "writable": true,
-          "signer": true
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
         },
         {
-          "name": "vault"
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "threshold",
+          "type": "u8"
+        }
+      ],
+      "discriminator": [
+        106,
+        132,
+        98,
+        252,
+        139,
+        236,
+        201,
+        139
+      ]
+    },
+    {
+      "name": "addBeneficiary",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "guardianEntry",
-          "writable": true
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "globalConfig"
+          "name": "beneficiaryEntry",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "proGuardianProfile",
-          "writable": true,
-          "optional": true
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "addBeneficiaryArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        68,
+        58,
+        166,
+        63,
+        90,
+        157,
+        205,
+        179
+      ]
+    },
+    {
+      "name": "updateBeneficiary",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiaryEntry",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "updateBeneficiaryArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        190,
+        142,
+        88,
+        70,
+        71,
+        183,
+        230,
+        68
+      ]
+    },
+    {
+      "name": "removeBeneficiary",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiaryEntry",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [],
       "discriminator": [
+        244,
+        2,
+        142,
+        188,
+        162,
+        111,
+        194,
+        97
+      ]
+    },
+    {
+      "name": "setAssetRule",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiaryEntry",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "assetRule",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "setAssetRuleArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        23,
+        137,
+        50,
+        0,
+        116,
+        46,
+        150,
+        119
+      ]
+    },
+    {
+      "name": "clearAssetRule",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "assetRule",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        220,
+        164,
         109,
+        11,
+        204,
+        202,
+        172,
+        124
+      ]
+    },
+    {
+      "name": "depositSol",
+      "accounts": [
+        {
+          "name": "depositor",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        234,
+        37,
         71,
-        139,
-        71,
-        94,
-        133,
-        129,
-        19
+        238,
+        136,
+        113,
+        255,
+        196
+      ]
+    },
+    {
+      "name": "depositSpl",
+      "accounts": [
+        {
+          "name": "depositor",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "depositorTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        128,
+        125,
+        206,
+        64,
+        128,
+        101,
+        186,
+        108
+      ]
+    },
+    {
+      "name": "withdrawSol",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        116,
+        28,
+        227,
+        101,
+        14,
+        24,
+        128,
+        160
+      ]
+    },
+    {
+      "name": "withdrawSpl",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        155,
+        116,
+        250,
+        43,
+        183,
+        116,
+        200,
+        236
+      ]
+    },
+    {
+      "name": "checkIn",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "livenessDelegate",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        70,
+        153,
+        189,
+        241,
+        32,
+        36,
+        145,
+        152
       ]
     },
     {
@@ -571,26 +861,33 @@
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "delegate",
-          "signer": true
+          "name": "livenessDelegate",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "guardianEntry",
-          "writable": true
-        },
-        {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "addLivenessDelegateArgs"
+          }
+        }
+      ],
       "discriminator": [
         153,
         29,
@@ -607,19 +904,18 @@
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "delegate"
-        },
-        {
-          "name": "guardianEntry",
-          "writable": true
+          "name": "livenessDelegate",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -639,34 +935,21 @@
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
-        },
-        {
-          "name": "docCommitment",
-          "writable": true
-        },
-        {
-          "name": "systemProgram"
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "docHash",
+          "name": "args",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "defined": "setDocumentCommitmentArgs"
           }
-        },
-        {
-          "name": "docUri",
-          "type": "string"
         }
       ],
       "discriminator": [
@@ -685,16 +968,13 @@
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
-        },
-        {
-          "name": "docCommitment",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -713,20 +993,24 @@
       "name": "initiateUnlock",
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "guardian",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -746,25 +1030,28 @@
       "accounts": [
         {
           "name": "guardian",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "vault"
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
-        },
-        {
-          "name": "guardianEntry"
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "guardianApproval",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -784,16 +1071,18 @@
       "accounts": [
         {
           "name": "owner",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -809,22 +1098,63 @@
       ]
     },
     {
-      "name": "openDispute",
+      "name": "finalizeUnlock",
       "accounts": [
         {
-          "name": "guardian",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "vault"
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        89,
+        186,
+        94,
+        28,
+        40,
+        235,
+        129,
+        241
+      ]
+    },
+    {
+      "name": "openDispute",
+      "accounts": [
+        {
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "guardianEntry"
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "unlockSession",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "disputeCase",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -843,23 +1173,37 @@
       "name": "resolveDispute",
       "accounts": [
         {
-          "name": "owner",
-          "writable": true,
-          "signer": true
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "disputeCase",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "resolved",
-          "type": "bool"
+          "name": "args",
+          "type": {
+            "defined": "resolveDisputeArgs"
+          }
         }
       ],
       "discriminator": [
@@ -877,24 +1221,29 @@
       "name": "initSolDistribution",
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "solDistribution",
-          "writable": true
+          "name": "solDistSession",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [],
@@ -913,37 +1262,41 @@
       "name": "executeSolBatch",
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "vaultAuthority",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "solDistribution",
-          "writable": true
+          "name": "solDistSession",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "executeBatchArgs"
-            }
+            "defined": "executeBatchArgs"
           }
         }
       ],
@@ -962,33 +1315,44 @@
       "name": "initSplDistribution",
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "splDistribution",
-          "writable": true
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "mint"
+          "name": "splDistSession",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "vaultTokenAccount"
-        },
-        {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "initSplDistributionArgs"
+          }
+        }
+      ],
       "discriminator": [
         86,
         244,
@@ -1004,41 +1368,61 @@
       "name": "executeSplBatch",
       "accounts": [
         {
-          "name": "signer",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "vaultAuthority",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "unlockSession",
-          "writable": true
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "splDistribution",
-          "writable": true
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "vaultTokenAccount",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "tokenProgram"
+          "name": "splDistSession",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
           "name": "args",
           "type": {
-            "defined": {
-              "name": "executeSplBatchArgs"
-            }
+            "defined": "executeSplBatchArgs"
           }
         }
       ],
@@ -1054,68 +1438,44 @@
       ]
     },
     {
-      "name": "finalizeUnlock",
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "vault",
-          "writable": true
-        },
-        {
-          "name": "unlockSession",
-          "writable": true
-        }
-      ],
-      "args": [],
-      "discriminator": [
-        89,
-        186,
-        94,
-        28,
-        40,
-        235,
-        129,
-        241
-      ]
-    },
-    {
       "name": "setSubscription",
       "accounts": [
         {
-          "name": "owner",
-          "writable": true,
-          "signer": true
+          "name": "caller",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "vault",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
           "name": "subscriptionState",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "globalConfig"
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "feeReceiver",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "tier",
+          "name": "args",
           "type": {
-            "defined": {
-              "name": "subscriptionTier"
-            }
+            "defined": "setSubscriptionArgs"
           }
         }
       ],
@@ -1131,29 +1491,63 @@
       ]
     },
     {
-      "name": "updateProGuardianProfile",
+      "name": "registerProfessionalGuardian",
       "accounts": [
         {
           "name": "guardian",
-          "writable": true,
-          "signer": true
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "proGuardianProfile",
-          "writable": true
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "systemProgram"
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "name",
-          "type": "string"
+          "name": "args",
+          "type": {
+            "defined": "registerProGuardianArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        5,
+        125,
+        183,
+        106,
+        61,
+        44,
+        152,
+        148
+      ]
+    },
+    {
+      "name": "updateProGuardianProfile",
+      "accounts": [
+        {
+          "name": "guardian",
+          "isMut": true,
+          "isSigner": true
         },
         {
-          "name": "uri",
-          "type": "string"
+          "name": "proGuardianProfile",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "registerProGuardianArgs"
+          }
         }
       ],
       "discriminator": [
@@ -1165,6 +1559,140 @@
         185,
         28,
         195
+      ]
+    },
+    {
+      "name": "setKycStatus",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "proGuardianProfile",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "setKycStatusArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        209,
+        255,
+        233,
+        160,
+        156,
+        153,
+        243,
+        237
+      ]
+    },
+    {
+      "name": "bondForVault",
+      "accounts": [
+        {
+          "name": "guardian",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "proGuardianProfile",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "proGuardianBond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "bondForVaultArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        45,
+        16,
+        146,
+        224,
+        112,
+        228,
+        6,
+        89
+      ]
+    },
+    {
+      "name": "slashBond",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "globalConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "proGuardianBond",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "feeReceiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "slashBondArgs"
+          }
+        }
+      ],
+      "discriminator": [
+        191,
+        18,
+        67,
+        208,
+        27,
+        194,
+        15,
+        49
       ]
     }
   ],
@@ -1940,6 +2468,12 @@
             "type": {
               "option": "u8"
             }
+          },
+          {
+            "name": "arbiter",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -1956,9 +2490,7 @@
           {
             "name": "role",
             "type": {
-              "defined": {
-                "name": "guardianRole"
-              }
+              "defined": "guardianRole"
             }
           }
         ]
@@ -1980,6 +2512,306 @@
           {
             "name": "active",
             "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "addLivenessDelegateArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "delegateWallet",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "setDocumentCommitmentArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "docHash",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "docUri",
+            "type": {
+              "array": [
+                "u8",
+                256
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "setSubscriptionArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tier",
+            "type": {
+              "defined": "subscriptionTier"
+            }
+          },
+          {
+            "name": "durationSeconds",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "registerProGuardianArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nameHash",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "profileUri",
+            "type": {
+              "array": [
+                "u8",
+                256
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "setKycStatusArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "status",
+            "type": {
+              "defined": "kycStatus"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "bondForVaultArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bondLamports",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "slashBondArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "slashReasonHash",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "resolveDisputeArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "resolution",
+            "type": {
+              "defined": "disputeStatus"
+            }
+          },
+          {
+            "name": "resolutionNoteHash",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  64
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "executeBatchArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "startIndex",
+            "type": "u8"
+          },
+          {
+            "name": "batchSize",
+            "type": "u8"
+          },
+          {
+            "name": "rulesMask",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "executeSplBatchArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "startIndex",
+            "type": "u8"
+          },
+          {
+            "name": "batchSize",
+            "type": "u8"
+          },
+          {
+            "name": "rulesMask",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "initSplDistributionArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "createMissingAtas",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "disputeStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "open"
+          },
+          {
+            "name": "resolvedCancel"
+          },
+          {
+            "name": "resolvedProceed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "kycStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "unverified"
+          },
+          {
+            "name": "pending"
+          },
+          {
+            "name": "verified"
+          },
+          {
+            "name": "revoked"
+          }
+        ]
+      }
+    },
+    {
+      "name": "updateBeneficiaryArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "shareBps",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "active",
+            "type": {
+              "option": "bool"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "setAssetRuleArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": "assetRuleMode"
+            }
+          },
+          {
+            "name": "fixedBps",
+            "type": {
+              "option": "u16"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "assetRuleMode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "proRata"
+          },
+          {
+            "name": "fixedBps"
+          },
+          {
+            "name": "entireToBeneficiary"
           }
         ]
       }

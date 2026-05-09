@@ -1,59 +1,77 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const idlPath = path.join(process.cwd(), 'legacyvault/target/idl/legacyvault.json');
+const IDL_PATH = path.join(process.cwd(), 'legacyvault/target/idl/legacyvault.json');
 
 const expectedInstructions = [
-  'initializeGlobalConfig',
-  'updateGlobalConfig',
-  'pauseProgram',
-  'unpauseProgram',
-  'createVault',
-  'updateVaultSettings',
-  'freezeVault',
-  'unfreezeVault',
-  'addGuardian',
-  'removeGuardian',
-  'acceptGuardian',
-  'checkIn',
-  'addLivenessDelegate',
-  'removeLivenessDelegate',
-  'setDocumentCommitment',
-  'revokeDocumentCommitment',
-  'initiateUnlock',
-  'approveUnlock',
-  'cancelUnlock',
-  'openDispute',
-  'resolveDispute',
-  'initSolDistribution',
-  'executeSolBatch',
-  'initSplDistribution',
-  'executeSplBatch',
-  'finalizeUnlock',
-  'setSubscription',
-  'updateProGuardianProfile'
+  // Module A
+  'initializeGlobalConfig', 'updateGlobalConfig', 'pauseProgram', 'unpauseProgram',
+  // Module B
+  'createVault', 'updateVaultSettings', 'freezeVault', 'unfreezeVault',
+  // Module C
+  'addGuardian', 'acceptGuardianInvitation', 'removeGuardian', 'setGuardianThreshold',
+  // Module D
+  'addBeneficiary', 'updateBeneficiary', 'removeBeneficiary', 'setAssetRule', 'clearAssetRule',
+  // Module E
+  'depositSol', 'depositSpl', 'withdrawSol', 'withdrawSpl',
+  // Module F
+  'checkIn', 'addLivenessDelegate', 'removeLivenessDelegate',
+  // Module G
+  'setDocumentCommitment', 'revokeDocumentCommitment',
+  // Module H
+  'initiateUnlock', 'approveUnlock', 'cancelUnlock', 'finalizeUnlock', 'openDispute', 'resolveDispute',
+  // Module I
+  'initSolDistribution', 'executeSolBatch', 'initSplDistribution', 'executeSplBatch',
+  // Module J
+  'setSubscription', 'registerProfessionalGuardian', 'updateProGuardianProfile', 'setKycStatus', 'bondForVault', 'slashBond'
 ];
 
-async function main() {
-  if (!fs.existsSync(idlPath)) {
-    console.error(`IDL not found at ${idlPath}`);
+function check() {
+  if (!fs.existsSync(IDL_PATH)) {
+    console.error(`IDL not found at ${IDL_PATH}`);
     process.exit(1);
   }
 
-  const idl = JSON.parse(fs.readFileSync(idlPath, 'utf8'));
-  const instructions = idl.instructions.map((ix: any) => ix.name);
+  const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf8'));
+  const instructions = idl.instructions;
+  const instructionNames = instructions.map((i: any) => i.name);
 
-  console.log(`Checking IDL surface... (${instructions.length} instructions found)`);
+  console.log(`Checking IDL surface... (${instructionNames.length} instructions found)`);
 
-  const missing = expectedInstructions.filter(name => !instructions.includes(name));
+  const missing = expectedInstructions.filter(name => !instructionNames.includes(name));
 
   if (missing.length > 0) {
-    console.error('CRITICAL: Missing instructions in IDL:');
-    missing.forEach(m => console.error(` - ${m}`));
+    console.error(`FAILURE: Missing instructions in IDL: ${missing.join(', ')}`);
     process.exit(1);
   }
 
-  console.log('SUCCESS: All instructions present in IDL.');
+  if (instructionNames.length !== expectedInstructions.length) {
+    console.error(`FAILURE: IDL has ${instructionNames.length} instructions, but expected exactly ${expectedInstructions.length}.`);
+    process.exit(1);
+  }
+
+  // Schema Validation for critical instructions
+  const criticalChecks = [
+    { name: 'setDocumentCommitment', expectedArgs: 1 },
+    { name: 'addLivenessDelegate', expectedArgs: 1 },
+    { name: 'setSubscription', expectedArgs: 1 },
+    { name: 'addBeneficiary', expectedArgs: 1 },
+    { name: 'initializeGlobalConfig', expectedArgs: 4 },
+  ];
+
+  for (const check of criticalChecks) {
+    const inst = instructions.find((i: any) => i.name === check.name);
+    if (!inst) {
+       console.error(`FAILURE: Instruction ${check.name} missing`);
+       process.exit(1);
+    }
+    if (inst.args.length !== check.expectedArgs) {
+      console.error(`FAILURE: Instruction ${check.name} has wrong arg count. Expected ${check.expectedArgs}, got ${inst.args.length}`);
+      process.exit(1);
+    }
+  }
+
+  console.log('SUCCESS: All 42 instructions present and schema-verified.');
 }
 
-main();
+check();
