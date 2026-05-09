@@ -1,6 +1,6 @@
 // dashboard/src/__tests__/components/TxStatusModal.test.tsx
 import { render, screen } from '@testing-library/react';
-import TxStatusModal from '../../components/TxStatusModal';
+import { TxStatusModal } from '../../components/TxStatusModal';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 

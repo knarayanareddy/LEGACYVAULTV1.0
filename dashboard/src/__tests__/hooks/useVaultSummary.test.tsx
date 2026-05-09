@@ -7,6 +7,15 @@ import { vi } from 'vitest';
 // Mock fetch
 global.fetch = vi.fn();
 
+vi.mock('../../hooks/useVault', () => ({
+  useVault: () => ({
+    vaultPubkey: 'Vault111',
+    setVaultPubkey: vi.fn(),
+    hasVault: true,
+    connectedWallet: { publicKey: { toString: () => 'Owner111' } }
+  })
+}));
+
 const wrapper = ({ children }: any) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     {children}
