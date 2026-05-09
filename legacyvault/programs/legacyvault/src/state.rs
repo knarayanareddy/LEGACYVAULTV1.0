@@ -164,6 +164,7 @@ pub struct Vault {
 
     // ── Counters ─────────────────────────────────────────────────────────────
     pub unlock_session_count: u32,
+    pub active_unlock_session_id: Option<u32>,
     pub distribution_nonce: u32,
 
     // ── Subscription ─────────────────────────────────────────────────────────
@@ -171,7 +172,7 @@ pub struct Vault {
 
     // ── Future expansion padding ─────────────────────────────────────────────
     pub active_beneficiary_count: u16,
-    pub _reserved: [u8; 62],
+    pub _reserved: [u8; 57],
 }
 
 impl Vault {

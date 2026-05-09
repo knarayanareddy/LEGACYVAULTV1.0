@@ -80,6 +80,7 @@ pub struct SetDocumentCommitmentArgs {
 pub struct ExecuteBatchArgs {
     pub start_index: u8,
     pub batch_size:  u8,
+    pub rules_mask: u16,
 }
 
 /// Arguments for init_spl_distribution.
@@ -93,6 +94,7 @@ pub struct InitSplDistributionArgs {
 pub struct ExecuteSplBatchArgs {
     pub start_index: u8,
     pub batch_size:  u8,
+    pub rules_mask: u16,
 }
 
 /// Arguments for set_subscription.
@@ -355,7 +357,7 @@ pub mod legacyvault {
         vault.distribution_nonce = 0;
         vault.subscription_tier = SubscriptionTier::Free;
         vault.active_beneficiary_count = 0;
-        vault._reserved = [0u8; 62];
+        vault._reserved = [0u8; 57];
 
         // Enforce OwnerState vault counts limit with manual initialization to save stack space
         let mut owner_state = if ctx.accounts.owner_state.data_is_empty() {
@@ -1071,6 +1073,10 @@ pub mod legacyvault {
                 delegate.delegate_wallet == signer,
                 LegacyVaultError::Unauthorized
             );
+            require!(
+                delegate.vault == vault.key(),
+                LegacyVaultError::InvalidPda
+            );
         }
 
         vault.last_check_in = clock.unix_timestamp;
@@ -1220,6 +1226,7 @@ pub mod legacyvault {
 
         // Update vault status
         vault.status = VaultStatus::Unlocking;
+        vault.active_unlock_session_id = Some(vault.unlock_session_count);
         vault.unlock_session_count = vault
             .unlock_session_count
             .checked_add(1)
@@ -1297,6 +1304,7 @@ pub mod legacyvault {
 
         // Restore vault to Active status
         vault.status = VaultStatus::Active;
+        vault.active_unlock_session_id = None;
 
         emit!(UnlockCancelled {
             vault: vault.key(),
@@ -1374,6 +1382,7 @@ pub mod legacyvault {
                 unlock_session.status = UnlockSessionStatus::Cancelled;
                 unlock_session.cancelled_at = Some(clock.unix_timestamp);
                 vault.status = VaultStatus::Active;
+                vault.active_unlock_session_id = None;
             }
             DisputeStatus::ResolvedProceed => {
                 unlock_session.status = UnlockSessionStatus::Executing;
@@ -1465,13 +1474,11 @@ pub mod legacyvault {
         let sol_session = &mut ctx.accounts.sol_distribution_session;
         let clock = Clock::get()?;
 
-        // Validate cursor matches start_index
         require!(
             args.start_index == sol_session.cursor,
             LegacyVaultError::InvalidBatchCursor
         );
 
-        // Validate batch doesn't exceed total
         let end_index = args
             .start_index
             .checked_add(args.batch_size)
@@ -1481,28 +1488,15 @@ pub mod legacyvault {
             end_index <= sol_session.total_beneficiaries,
             LegacyVaultError::InvalidRemainingAccounts
         );
-        // Parse remaining accounts: [BeneficiaryEntry, BeneficiaryWallet] per beneficiary
-        let remaining = &ctx.remaining_accounts;
-        require!(
-            remaining.len() == (args.batch_size as usize) * 2,
-            LegacyVaultError::InvalidRemainingAccounts
-        );
 
-        // Validate monotonic progress across batches (Item 5)
-        let first_wallet_info = &remaining[1];
-        if let Some(last_pub) = sol_session.last_processed_pubkey {
-            require!(
-                first_wallet_info.key().to_bytes() > last_pub.to_bytes(),
-                LegacyVaultError::InvalidMonotonicOrder
-            );
-        }
+        let remaining = &ctx.remaining_accounts;
+        let mut account_idx = 0;
+
         let vault_key = vault.key();
-        let authority_bump = vault.authority_bump;
-        let bump_slice = &[authority_bump];
         let seeds = &[
             b"vault_auth",
             vault_key.as_ref(),
-            bump_slice,
+            &[vault.authority_bump],
         ];
         let signer_seeds = &[&seeds[..]];
 
@@ -1510,49 +1504,64 @@ pub mod legacyvault {
         let is_final_batch = end_index == sol_session.total_beneficiaries;
 
         for i in 0..args.batch_size as usize {
-            let beneficiary_entry_info = &remaining[i * 2];
-            let beneficiary_wallet_info = &remaining[i * 2 + 1];
+            // Read Entry and Wallet
+            let beneficiary_entry_info = &remaining[account_idx];
+            let beneficiary_wallet_info = &remaining[account_idx + 1];
+            account_idx += 2;
 
             // Deserialize beneficiary entry
             let mut beneficiary_data: &[u8] = &beneficiary_entry_info.try_borrow_data()?;
             let beneficiary_entry = BeneficiaryEntry::try_deserialize(&mut beneficiary_data)?;
 
-            // Validate beneficiary is active
             require!(
-                beneficiary_entry.active,
+                beneficiary_entry.active && beneficiary_entry.vault == vault.key() && beneficiary_entry.beneficiary_wallet == beneficiary_wallet_info.key(),
                 LegacyVaultError::InvalidRemainingAccounts
             );
 
-            // Validate belongs to this vault
-            require!(
-                beneficiary_entry.vault == vault.key(),
-                LegacyVaultError::InvalidPda
-            );
+            // Optional AssetRule
+            let has_rule = (args.rules_mask >> i) & 1 == 1;
+            let mut rule_amount: Option<u64> = None;
 
-            // Validate wallet matches
-            require!(
-                beneficiary_entry.beneficiary_wallet == beneficiary_wallet_info.key(),
-                LegacyVaultError::InvalidRemainingAccounts
-            );
+            if has_rule {
+                let rule_info = &remaining[account_idx];
+                account_idx += 1;
+                
+                let mut rule_data: &[u8] = &rule_info.try_borrow_data()?;
+                let rule = AssetRule::try_deserialize(&mut rule_data)?;
 
-            // Validate ascending order (determinism)
-            if i > 0 {
-                let prev_wallet_info = &remaining[(i - 1) * 2 + 1];
                 require!(
-                    beneficiary_wallet_info.key().to_bytes() > prev_wallet_info.key().to_bytes(),
-                    LegacyVaultError::InvalidBeneficiaryOrder
+                    rule.vault == vault.key() && rule.beneficiary_wallet == beneficiary_wallet_info.key() && rule.mint == Pubkey::default(),
+                    LegacyVaultError::InvalidPda
                 );
+
+                match rule.mode {
+                    AssetRuleMode::FixedBps => {
+                        if let Some(bps) = rule.fixed_bps {
+                            rule_amount = Some(
+                                (bps as u64)
+                                    .checked_mul(sol_session.total_lamports)
+                                    .ok_or(LegacyVaultError::MathOverflow)?
+                                    .checked_div(BPS_DENOMINATOR as u64)
+                                    .ok_or(LegacyVaultError::DivisionByZero)?
+                            );
+                        }
+                    },
+                    AssetRuleMode::EntireToBeneficiary => {
+                        rule_amount = Some(sol_session.total_lamports);
+                    },
+                    _ => {} // ProRata
+                }
             }
 
             // Calculate amount
-            let amount = if is_final_batch && i == (args.batch_size as usize - 1) {
-                // Last beneficiary in final batch gets remainder
+            let amount = if let Some(a) = rule_amount {
+                a
+            } else if is_final_batch && i == (args.batch_size as usize - 1) {
                 sol_session
                     .total_lamports
                     .checked_sub(sol_session.distributed_lamports)
                     .ok_or(LegacyVaultError::MathUnderflow)?
             } else {
-                // Pro-rata calculation
                 (beneficiary_entry.share_bps as u64)
                     .checked_mul(sol_session.total_lamports)
                     .ok_or(LegacyVaultError::MathOverflow)?
@@ -1560,17 +1569,21 @@ pub mod legacyvault {
                     .ok_or(LegacyVaultError::DivisionByZero)?
             };
 
-            // Transfer lamports from vault_authority to beneficiary using safe signed CPI transfer
+            // Transfer
             if amount > 0 {
-                let cpi_context = CpiContext::new_with_signer(
-                    ctx.accounts.system_program.to_account_info(),
-                    Transfer {
-                        from: ctx.accounts.vault_authority.to_account_info(),
-                        to: beneficiary_wallet_info.to_account_info(),
-                    },
+                anchor_lang::solana_program::program::invoke_signed(
+                    &anchor_lang::solana_program::system_instruction::transfer(
+                        &ctx.accounts.vault_authority.key(),
+                        &beneficiary_wallet_info.key(),
+                        amount,
+                    ),
+                    &[
+                        ctx.accounts.vault_authority.to_account_info(),
+                        beneficiary_wallet_info.to_account_info(),
+                        ctx.accounts.system_program.to_account_info(),
+                    ],
                     signer_seeds,
-                );
-                transfer(cpi_context, amount)?;
+                )?;
             }
 
             batch_distributed = batch_distributed
@@ -1583,16 +1596,12 @@ pub mod legacyvault {
             .distributed_lamports
             .checked_add(batch_distributed)
             .ok_or(LegacyVaultError::MathOverflow)?;
-
         sol_session.cursor = end_index;
 
-        let last_processed_wallet = &remaining[((args.batch_size - 1) as usize) * 2 + 1];
-        sol_session.last_processed_pubkey = Some(last_processed_wallet.key());
-
-        // Mark complete if final batch
         if is_final_batch {
             sol_session.completed_at = Some(clock.unix_timestamp);
         }
+
         emit!(SolBatchExecuted {
             vault: vault.key(),
             start_index: args.start_index,
@@ -1693,7 +1702,6 @@ pub mod legacyvault {
         let spl_session = &mut ctx.accounts.spl_distribution_session;
         let clock = Clock::get()?;
 
-        // Validate cursor matches start_index
         require!(
             args.start_index == spl_session.cursor,
             LegacyVaultError::InvalidBatchCursor
@@ -1709,17 +1717,9 @@ pub mod legacyvault {
             LegacyVaultError::InvalidRemainingAccounts
         );
 
-        // Parse remaining accounts: [BeneficiaryEntry, BeneficiaryWallet, BeneficiaryATA] × batch_size
         let remaining = &ctx.remaining_accounts;
-        require!(
-            remaining.len() == (args.batch_size as usize) * 3,
-            LegacyVaultError::InvalidRemainingAccounts
-        );
+        let mut account_idx = 0;
 
-        let mut batch_distributed = 0u64;
-        let is_final_batch = end_index == spl_session.total_beneficiaries;
-
-        // PDA signer seeds for vault authority
         let vault_key = vault.key();
         let seeds = &[
             b"vault_auth",
@@ -1728,40 +1728,59 @@ pub mod legacyvault {
         ];
         let signer_seeds = &[&seeds[..]];
 
-        for i in 0..args.batch_size as usize {
-            let beneficiary_entry_info = &remaining[i * 3];
-            let beneficiary_wallet_info = &remaining[i * 3 + 1];
-            let beneficiary_ata_info = &remaining[i * 3 + 2];
+        let mut batch_distributed = 0u64;
+        let is_final_batch = end_index == spl_session.total_beneficiaries;
 
-            // Deserialize beneficiary entry
+        for i in 0..args.batch_size as usize {
+            let beneficiary_entry_info = &remaining[account_idx];
+            let beneficiary_wallet_info = &remaining[account_idx + 1];
+            let beneficiary_ata_info = &remaining[account_idx + 2];
+            account_idx += 3;
+
             let mut beneficiary_data: &[u8] = &beneficiary_entry_info.try_borrow_data()?;
             let beneficiary_entry = BeneficiaryEntry::try_deserialize(&mut beneficiary_data)?;
 
             require!(
-                beneficiary_entry.active,
-                LegacyVaultError::InvalidRemainingAccounts
-            );
-            require!(
-                beneficiary_entry.vault == vault.key(),
-                LegacyVaultError::InvalidPda
-            );
-            require!(
-                beneficiary_entry.beneficiary_wallet == beneficiary_wallet_info.key(),
+                beneficiary_entry.active && beneficiary_entry.vault == vault.key() && beneficiary_entry.beneficiary_wallet == beneficiary_wallet_info.key(),
                 LegacyVaultError::InvalidRemainingAccounts
             );
 
-            // Validate ascending order
-            if i > 0 {
-                let prev_wallet_info = &remaining[(i - 1) * 3 + 1];
+            // Optional AssetRule
+            let has_rule = (args.rules_mask >> i) & 1 == 1;
+            let mut rule_amount: Option<u64> = None;
+
+            if has_rule {
+                let rule_info = &remaining[account_idx];
+                account_idx += 1;
+                
+                let mut rule_data: &[u8] = &rule_info.try_borrow_data()?;
+                let rule = AssetRule::try_deserialize(&mut rule_data)?;
+
                 require!(
-                    beneficiary_wallet_info.key().to_bytes() > prev_wallet_info.key().to_bytes(),
-                    LegacyVaultError::InvalidBeneficiaryOrder
+                    rule.vault == vault.key() && rule.beneficiary_wallet == beneficiary_wallet_info.key() && rule.mint == ctx.accounts.mint.key(),
+                    LegacyVaultError::InvalidPda
                 );
+
+                match rule.mode {
+                    AssetRuleMode::FixedBps => {
+                        if let Some(bps) = rule.fixed_bps {
+                            rule_amount = Some(
+                                (bps as u64)
+                                    .checked_mul(spl_session.total_amount)
+                                    .ok_or(LegacyVaultError::MathOverflow)?
+                                    .checked_div(BPS_DENOMINATOR as u64)
+                                    .ok_or(LegacyVaultError::DivisionByZero)?
+                            );
+                        }
+                    },
+                    AssetRuleMode::EntireToBeneficiary => {
+                        rule_amount = Some(spl_session.total_amount);
+                    },
+                    _ => {}
+                }
             }
 
-            // If create_missing_atas is true and ATA doesn't exist, create it
             if spl_session.create_missing_atas && beneficiary_ata_info.data_is_empty() {
-                // Create ATA using associated_token::create CPI
                 anchor_spl::associated_token::create(
                     CpiContext::new(
                         ctx.accounts.associated_token_program.to_account_info(),
@@ -1777,10 +1796,9 @@ pub mod legacyvault {
                 )?;
             }
 
-            // Calculate amount (pro-rata or with asset rule overrides)
-            // For simplicity here we use pro-rata; in production you'd check for AssetRule PDAs
-            let amount = if is_final_batch && i == (args.batch_size as usize - 1) {
-                // Remainder
+            let amount = if let Some(a) = rule_amount {
+                a
+            } else if is_final_batch && i == (args.batch_size as usize - 1) {
                 spl_session
                     .total_amount
                     .checked_sub(spl_session.distributed_amount)
@@ -1793,33 +1811,32 @@ pub mod legacyvault {
                     .ok_or(LegacyVaultError::DivisionByZero)?
             };
 
-            // Transfer tokens
-            transfer_checked(
-                CpiContext::new_with_signer(
-                    ctx.accounts.token_program.to_account_info(),
-                    TransferChecked {
-                        from: ctx.accounts.vault_token_account.to_account_info(),
-                        mint: ctx.accounts.mint.to_account_info(),
-                        to: beneficiary_ata_info.clone(),
-                        authority: ctx.accounts.vault_authority.to_account_info(),
-                    },
-                    signer_seeds,
-                ),
-                amount,
-                ctx.accounts.mint.decimals,
-            )?;
+            if amount > 0 {
+                transfer_checked(
+                    CpiContext::new_with_signer(
+                        ctx.accounts.token_program.to_account_info(),
+                        TransferChecked {
+                            from: ctx.accounts.vault_token_account.to_account_info(),
+                            mint: ctx.accounts.mint.to_account_info(),
+                            to: beneficiary_ata_info.clone(),
+                            authority: ctx.accounts.vault_authority.to_account_info(),
+                        },
+                        signer_seeds,
+                    ),
+                    amount,
+                    ctx.accounts.mint.decimals,
+                )?;
+            }
 
             batch_distributed = batch_distributed
                 .checked_add(amount)
                 .ok_or(LegacyVaultError::MathOverflow)?;
         }
 
-        // Update session
         spl_session.distributed_amount = spl_session
             .distributed_amount
             .checked_add(batch_distributed)
             .ok_or(LegacyVaultError::MathOverflow)?;
-
         spl_session.cursor = end_index;
 
         if is_final_batch {
@@ -1874,6 +1891,7 @@ pub mod legacyvault {
 
         // Finalize
         vault.status = VaultStatus::Distributed;
+        vault.active_unlock_session_id = None;
         unlock_session.status = UnlockSessionStatus::Executed;
         unlock_session.executed_at = Some(clock.unix_timestamp);
 
@@ -1885,6 +1903,7 @@ pub mod legacyvault {
 
         Ok(())
     }
+
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODULE J — SUBSCRIPTION

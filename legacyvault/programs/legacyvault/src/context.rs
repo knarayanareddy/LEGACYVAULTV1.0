@@ -208,7 +208,11 @@ pub struct UnfreezeVault<'info> {
     // Need the unlock session to decide which status to restore to
     // (Active if no active session; Unlocking if a Proposed/Approved session exists)
     #[account(
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump,
     )]
     pub unlock_session: Option<Account<'info, UnlockSession>>,
@@ -876,7 +880,11 @@ pub struct InitiateUnlock<'info> {
         init,
         payer  = guardian,
         space  = UnlockSession::SIZE,
-        seeds  = [b"unlock_session", vault.key().as_ref()],
+        seeds  = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.unlock_session_count.to_le_bytes(),
+        ],
         bump,
     )]
     pub unlock_session: Box<Account<'info, UnlockSession>>,
@@ -927,7 +935,11 @@ pub struct ApproveUnlock<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault  == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -974,7 +986,11 @@ pub struct CancelUnlock<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1001,7 +1017,11 @@ pub struct OpenDispute<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1039,7 +1059,11 @@ pub struct ResolveDispute<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1080,7 +1104,7 @@ pub struct InitSolDistribution<'info> {
         constraint = vault.status != VaultStatus::Frozen
             @ LegacyVaultError::VaultFrozen,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     /// CHECK: Vault authority — we read its lamport balance to set total_lamports.
     #[account(
@@ -1091,14 +1115,18 @@ pub struct InitSolDistribution<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault == vault.key()
             @ LegacyVaultError::InvalidPda,
         constraint = unlock_session.status == UnlockSessionStatus::Approved
             @ LegacyVaultError::UnlockSessionNotApproved,
     )]
-    pub unlock_session: Account<'info, UnlockSession>,
+    pub unlock_session: Box<Account<'info, UnlockSession>>,
 
     #[account(
         init,
@@ -1107,7 +1135,7 @@ pub struct InitSolDistribution<'info> {
         seeds  = [b"dist_sol", unlock_session.key().as_ref()],
         bump,
     )]
-    pub sol_distribution_session: Account<'info, SolDistributionSession>,
+    pub sol_distribution_session: Box<Account<'info, SolDistributionSession>>,
 
     pub system_program: Program<'info, System>,
 }
@@ -1142,7 +1170,11 @@ pub struct ExecuteSolBatch<'info> {
     pub vault_authority: SystemAccount<'info>,
 
     #[account(
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault   == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1198,7 +1230,11 @@ pub struct InitSplDistribution<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault  == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1266,7 +1302,11 @@ pub struct ExecuteSplBatch<'info> {
     pub vault_authority: UncheckedAccount<'info>,
 
     #[account(
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault  == vault.key()
             @ LegacyVaultError::InvalidPda,
@@ -1325,7 +1365,11 @@ pub struct FinalizeUnlock<'info> {
 
     #[account(
         mut,
-        seeds = [b"unlock_session", vault.key().as_ref()],
+        seeds = [
+            b"unlock_session",
+            vault.key().as_ref(),
+            &vault.active_unlock_session_id.unwrap_or(0).to_le_bytes(),
+        ],
         bump  = unlock_session.bump,
         constraint = unlock_session.vault  == vault.key()
             @ LegacyVaultError::InvalidPda,
