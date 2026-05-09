@@ -11,20 +11,23 @@ import {
 import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { Legacyvault } from '../target/types/legacyvault';
+import * as fs from 'fs';
+import * as path from 'path';
+const idl = JSON.parse(fs.readFileSync(path.resolve('./target/idl/legacyvault.json'), 'utf8'));
 import * as fix from './fixtures';
 
 describe('LegacyVault', () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.Legacyvault as Program<Legacyvault>;
+  const program = new Program(idl as any, provider);
 
   let accounts: fix.TestAccounts;
   let globalConfig: PublicKey;
   let vault: PublicKey;
   let vaultAuthority: PublicKey;
   let subscriptionState: PublicKey;
+  let ownerState: PublicKey;
 
   // ─── Setup ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +49,7 @@ describe('LegacyVault', () => {
     [vault] = fix.deriveVaultPDA(program, accounts.owner.publicKey, 0);
     [vaultAuthority] = fix.deriveVaultAuthorityPDA(program, vault);
     [subscriptionState] = fix.deriveSubscriptionStatePDA(program, vault);
+    [ownerState] = PublicKey.findProgramAddressSync([Buffer.from('owner_state'), accounts.owner.publicKey.toBuffer()], program.programId);
   });
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -122,6 +126,7 @@ describe('LegacyVault', () => {
           vault,
           vaultAuthority,
           subscriptionState,
+          ownerState,
           globalConfig,
           feeReceiver: accounts.admin.publicKey,
           systemProgram: SystemProgram.programId,
@@ -294,7 +299,7 @@ describe('LegacyVault', () => {
       const depositAmount = new BN(1 * LAMPORTS_PER_SOL);
 
       await program.methods
-        .depositSol()
+        .depositSol(depositAmount)
         .accounts({
           depositor: accounts.owner.publicKey,
           vault,
@@ -325,6 +330,7 @@ describe('LegacyVault', () => {
           vault,
           vaultAuthority,
           ownerWallet: accounts.owner.publicKey,
+          globalConfig,
           systemProgram: SystemProgram.programId,
         })
         .signers([accounts.owner])

@@ -133,14 +133,13 @@ pub struct CreateVault<'info> {
     )]
     pub subscription_state: Box<Account<'info, SubscriptionState>>,
 
+    /// CHECK: Manual initialization inside instruction handler if empty to optimize stack frame size.
     #[account(
-        init_if_needed,
-        payer = owner,
-        space = OwnerState::SIZE,
+        mut,
         seeds = [b"owner_state", owner.key().as_ref()],
         bump,
     )]
-    pub owner_state: Box<Account<'info, OwnerState>>,
+    pub owner_state: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -479,7 +478,7 @@ pub struct SetAssetRule<'info> {
         constraint = vault.status != VaultStatus::Distributed
             @ LegacyVaultError::VaultAlreadyDistributed,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     #[account(
         seeds = [
@@ -491,7 +490,7 @@ pub struct SetAssetRule<'info> {
         constraint = beneficiary_entry.vault == vault.key()
             @ LegacyVaultError::InvalidPda,
     )]
-    pub beneficiary_entry: Account<'info, BeneficiaryEntry>,
+    pub beneficiary_entry: Box<Account<'info, BeneficiaryEntry>>,
 
     #[account(
         init_if_needed,
@@ -505,7 +504,7 @@ pub struct SetAssetRule<'info> {
         ],
         bump,
     )]
-    pub asset_rule: Account<'info, AssetRule>,
+    pub asset_rule: Box<Account<'info, AssetRule>>,
 
     pub system_program: Program<'info, System>,
 }

@@ -357,18 +357,49 @@ pub mod legacyvault {
         vault.active_beneficiary_count = 0;
         vault._reserved = [0u8; 62];
 
-        // Enforce OwnerState vault counts limit
-        let owner_state = &mut ctx.accounts.owner_state;
-        if owner_state.vault_count == 0 {
-            owner_state.owner = ctx.accounts.owner.key();
-            owner_state.bump = ctx.bumps.owner_state;
-            owner_state._reserved = [0u8; 8];
-        }
+        // Enforce OwnerState vault counts limit with manual initialization to save stack space
+        let mut owner_state = if ctx.accounts.owner_state.data_is_empty() {
+            let bump = ctx.bumps.owner_state;
+            let signer_seeds: &[&[u8]] = &[
+                b"owner_state",
+                ctx.accounts.owner.key.as_ref(),
+                &[bump],
+            ];
+            anchor_lang::solana_program::program::invoke_signed(
+                &anchor_lang::solana_program::system_instruction::create_account(
+                    ctx.accounts.owner.key,
+                    ctx.accounts.owner_state.key,
+                    Rent::get()?.minimum_balance(OwnerState::SIZE),
+                    OwnerState::SIZE as u64,
+                    ctx.program_id,
+                ),
+                &[
+                    ctx.accounts.owner.to_account_info(),
+                    ctx.accounts.owner_state.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+                &[signer_seeds],
+            )?;
+            OwnerState {
+                owner: ctx.accounts.owner.key(),
+                vault_count: 0,
+                bump,
+                _reserved: [0u8; 8],
+            }
+        } else {
+            let data = ctx.accounts.owner_state.try_borrow_data()?;
+            OwnerState::try_deserialize(&mut &data[..])?
+        };
+
         owner_state.vault_count = owner_state.vault_count.checked_add(1).ok_or(LegacyVaultError::MathOverflow)?;
         require!(
             owner_state.vault_count <= MAX_VAULTS_FREE,
             LegacyVaultError::VaultLimitReached
         );
+
+        let mut owner_state_data = ctx.accounts.owner_state.try_borrow_mut_data()?;
+        let mut writer = &mut **owner_state_data;
+        owner_state.try_serialize(&mut writer)?;
 
         // Initialize subscription with Free tier
         subscription.vault = vault.key();
