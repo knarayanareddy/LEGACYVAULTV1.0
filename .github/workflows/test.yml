@@ -13,10 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Solana
-        run: |
-          rm -rf ~/.local/share/solana ~/.cache/solana
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+        uses: metadaoproject/setup-solana@v1.2
+        with:
+          solana-version: "1.18.26"
 
       - name: Install Anchor
         run: |
@@ -25,7 +24,6 @@ jobs:
       - name: Run Anchor tests
         working-directory: ./legacyvault
         run: |
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
           npm install --legacy-peer-deps
           anchor test
 
