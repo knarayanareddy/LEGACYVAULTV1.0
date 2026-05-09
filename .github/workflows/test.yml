@@ -37,9 +37,10 @@ jobs:
 
       - name: Build program + generate IDL
         working-directory: ./legacyvault
-        run: |
-          npm install --legacy-peer-deps
-          anchor build
+        run: anchor build
+
+      - name: 🛠️ Patch truncated IDL
+        run: npx ts-node scripts/patch_idl.ts
 
       - name: ✅ Verify IDL surface completeness
         run: npx ts-node scripts/check_idl_surface.ts
