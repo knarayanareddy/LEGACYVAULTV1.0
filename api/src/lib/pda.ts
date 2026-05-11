@@ -29,9 +29,11 @@ export const findBeneficiaryEntryPda = (vault: PublicKey, beneficiary: PublicKey
   );
 };
 
-export const findUnlockSessionPda = (vault: PublicKey): [PublicKey, number] => {
+export const findUnlockSessionPda = (vault: PublicKey, nonce: number): [PublicKey, number] => {
+  const nonceBuffer = Buffer.alloc(8);
+  nonceBuffer.writeBigUInt64LE(BigInt(nonce));
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('unlock_session'), vault.toBuffer()],
+    [Buffer.from('unlock_session'), vault.toBuffer(), nonceBuffer],
     programId
   );
 };

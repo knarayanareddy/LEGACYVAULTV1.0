@@ -173,7 +173,12 @@ export async function buildUnfreezeVaultTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+  
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
 
   const ix = await program.methods
     .unfreezeVault()
@@ -578,8 +583,12 @@ export async function buildInitiateUnlockTx(
 ): Promise<TxBuilderResponse> {
   const guardian = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+  
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionCount = vaultAccount.unlockSessionCount;
+  
   const [guardianEntryPda] = findGuardianEntryPda(vaultPda, guardian);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionCount);
   const [globalConfigPda] = findGlobalConfigPda();
 
   const ix = await program.methods
@@ -609,8 +618,13 @@ export async function buildApproveUnlockTx(
 ): Promise<TxBuilderResponse> {
   const guardian = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
   const [guardianEntryPda] = findGuardianEntryPda(vaultPda, guardian);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const [approvalPda] = findGuardianApprovalPda(unlockSessionPda, guardian);
 
   const ix = await program.methods
@@ -640,7 +654,12 @@ export async function buildCancelUnlockTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
 
   const ix = await program.methods
     .cancelUnlock()
@@ -670,8 +689,13 @@ export async function buildInitSolDistributionTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
   const [vaultAuthorityPda] = findVaultAuthorityPda(vaultPda);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const [solDistPda] = findSolDistSessionPda(unlockSessionPda);
 
   const ix = await program.methods
@@ -703,8 +727,13 @@ export async function buildExecSolDistributionBatchTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
   const [vaultAuthorityPda] = findVaultAuthorityPda(vaultPda);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const [solDistPda] = findSolDistSessionPda(unlockSessionPda);
 
   // In a real scenario, we'd fetch all active beneficiaries via prisma
@@ -754,8 +783,13 @@ export async function buildInitSplDistributionTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
   const [vaultAuthorityPda] = findVaultAuthorityPda(vaultPda);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const mintPda = new PublicKey(mint);
   const [splDistPda] = findSplDistSessionPda(unlockSessionPda, mintPda);
   const vaultAta = getAssociatedTokenAddressSync(mintPda, vaultAuthorityPda, true);
@@ -796,8 +830,13 @@ export async function buildExecSplDistributionBatchTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
   const [vaultAuthorityPda] = findVaultAuthorityPda(vaultPda);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const mintPda = new PublicKey(mint);
   const [splDistPda] = findSplDistSessionPda(unlockSessionPda, mintPda);
   const vaultAta = getAssociatedTokenAddressSync(mintPda, vaultAuthorityPda, true);
@@ -861,7 +900,12 @@ export async function buildFinalizeUnlockTx(
 ): Promise<TxBuilderResponse> {
   const owner = new PublicKey(feePayer);
   const vaultPda = new PublicKey(vault);
-  const [unlockSessionPda] = findUnlockSessionPda(vaultPda);
+
+  const vaultAccount = await program.account.vault.fetch(vaultPda);
+  const sessionId = vaultAccount.activeUnlockSessionId;
+  if (sessionId === null) throw new Error('No active unlock session found');
+
+  const [unlockSessionPda] = findUnlockSessionPda(vaultPda, sessionId);
   const [solDistPda] = findSolDistSessionPda(unlockSessionPda);
 
   const ix = await program.methods
