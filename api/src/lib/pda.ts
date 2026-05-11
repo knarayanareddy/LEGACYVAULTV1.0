@@ -98,3 +98,10 @@ export const findAssetRulePda = (vault: PublicKey, beneficiary: PublicKey, mint:
     programId
   );
 };
+
+export const findOwnerStatePda = (owner: PublicKey): [PublicKey, number] => {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from('owner_state'), owner.toBuffer()],
+    programId
+  );
+};

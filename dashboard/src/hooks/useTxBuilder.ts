@@ -85,14 +85,30 @@ export function useTxBuilder(): UseTxBuilderReturn {
       }
 
       setStatus('sending');
+      let sig: string;
+      try {
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          maxRetries: 3,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? `Send failed: ${e.message}` : 'Send failed';
+        setStatus('error');
+        setError(msg);
+        throw new Error(msg);
+      }
 
-      // MOCK NETWORK SEND FOR UI TESTING
-      // Since the smart contract is not deployed to Devnet, the network will reject it.
-      let sig: string = 'mock_signature_' + Date.now();
       setSignature(sig);
-
       setStatus('confirming');
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // simulate network delay
+
+      try {
+        await connection.confirmTransaction(sig, 'confirmed');
+      } catch (e) {
+        const msg = e instanceof Error ? `Confirm failed: ${e.message}` : 'Confirm failed';
+        setStatus('error');
+        setError(msg);
+        throw new Error(msg);
+      }
 
       setStatus('success');
       return sig;

@@ -16,6 +16,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { useTxBuilder, UseTxBuilderReturn } from './hooks/useTxBuilder';
 import { Buffer } from 'buffer';
 import { PublicKey } from '@solana/web3.js';
+import { config } from './config/constants';
 
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
@@ -284,6 +285,7 @@ const App: FC = () => {
   const handleCreateVault = useCallback(async () => {
     try {
       await tx.execute('create-vault', {
+        vaultNonce: 0,
         inactivityThreshold: 2592000, // 30 days
         timelockDuration: 86400 * 7,  // 7 days
         guardianThreshold: 1,
@@ -292,7 +294,7 @@ const App: FC = () => {
       if (walletPublicKey) {
         const vaultPda = PublicKey.findProgramAddressSync(
           [Buffer.from('vault'), walletPublicKey.toBuffer(), Buffer.from([0])],
-          new PublicKey('Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS')
+          new PublicKey(config.programId)
         )[0];
         setVaultPubkey(vaultPda.toBase58());
       }

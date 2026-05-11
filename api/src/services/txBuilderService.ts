@@ -23,6 +23,7 @@ import {
   findGlobalConfigPda,
   findSubscriptionPda,
   findGuardianApprovalPda,
+  findOwnerStatePda,
 } from '../lib/pda';
 import { TxBuilderResponse } from '../types/api';
 import { prisma } from './vaultService';
@@ -76,11 +77,11 @@ export async function buildCreateVaultTx(
   const [vaultAuthorityPda] = findVaultAuthorityPda(vaultPda);
   const [subscriptionPda] = findSubscriptionPda(vaultPda);
   const [globalConfigPda] = findGlobalConfigPda();
+  const [ownerStatePda] = findOwnerStatePda(owner);
 
-  // In a real scenario, we'd fetch globalConfig to get fee_receiver.
-  // For pre-wiring, we'll assume a placeholder or fetch it if possible.
-  // Let's assume the admin/fee_receiver is fixed for now or we use a dummy.
-  const feeReceiver = new PublicKey('11111111111111111111111111111111'); 
+  // Fetch on-chain global config to get fee_receiver
+  const globalConfig = await program.account.globalConfig.fetch(globalConfigPda);
+  const feeReceiver = globalConfig.feeReceiver as PublicKey;
 
   const ix = await program.methods
     .createVault({
@@ -96,6 +97,7 @@ export async function buildCreateVaultTx(
       subscriptionState: subscriptionPda,
       globalConfig: globalConfigPda,
       feeReceiver,
+      ownerState: ownerStatePda,
       systemProgram: SystemProgram.programId,
     })
     .instruction();
