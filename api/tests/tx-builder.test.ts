@@ -39,7 +39,7 @@ describe('Tx Builder Endpoints', () => {
 async function getAuthToken(wallet: Keypair): Promise<string> {
   const nonceRes = await server.inject({
     method: 'GET',
-    url: `/v1/auth/nonce?address=${wallet.publicKey.toBase58()}`,
+    url: `/v1/auth/nonce?wallet=${wallet.publicKey.toBase58()}`,
   });
   const { nonce } = JSON.parse(nonceRes.body);
 

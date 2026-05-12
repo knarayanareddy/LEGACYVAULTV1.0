@@ -99,7 +99,7 @@ export async function buildServer() {
   return fastify;
 }
 
-const isEntryPoint = import.meta.url.includes('server.ts') || process.argv[1]?.includes('server.ts');
+const isEntryPoint = (import.meta.url.includes('server.ts') || process.argv[1]?.includes('server.ts')) && !process.env.JEST_WORKER_ID;
 
 if (isEntryPoint) {
   buildServer().then(async (fastify) => {

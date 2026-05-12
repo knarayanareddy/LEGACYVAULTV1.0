@@ -84,6 +84,11 @@ jobs:
       - name: Install API dependencies
         working-directory: ./api
         run: npm ci --legacy-peer-deps
+      - name: Push database schema
+        working-directory: ./api
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5433/legacyvault_test
       - name: Run API tests
         working-directory: ./api
         run: npm test
@@ -134,6 +139,11 @@ jobs:
       - name: Install Indexer dependencies
         working-directory: ./indexer
         run: npm ci --legacy-peer-deps
+      - name: Push database schema
+        working-directory: ./indexer
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5434/legacyvault_test
       - name: Run Indexer tests
         working-directory: ./indexer
         run: npm test
