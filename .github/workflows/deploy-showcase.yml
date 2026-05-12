@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'build-legacyvault-showcase-website/**'
   workflow_dispatch:
 
 permissions:
