@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -88,7 +91,9 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5433/legacyvault_test
           REDIS_URL: redis://localhost:6380
           JWT_SECRET: test-secret
+          JWT_REFRESH_SECRET: test-refresh-secret
           PROGRAM_ID: 11111111111111111111111111111111
+          SOLANA_RPC_ENDPOINT: http://localhost:8899
 
   frontend-tests:
     runs-on: ubuntu-latest
