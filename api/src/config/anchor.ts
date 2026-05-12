@@ -41,17 +41,19 @@ function transformType(type: any): any {
 
 // Dynamically compute instruction discriminators and map types to Anchor v0.30 format
 IDL.instructions.forEach((ix: any) => {
-  if (!ix.discriminator) {
-    const snakeName = ix.name.replace(/([A-Z])/g, "_$1").toLowerCase();
-    const sighash = crypto.createHash('sha256').update(`global:${snakeName}`).digest();
-    ix.discriminator = Array.from(sighash.slice(0, 8));
-  }
+  const snakeName = ix.name.replace(/([A-Z])/g, "_$1").toLowerCase();
+  const sighash = crypto.createHash('sha256').update(`global:${snakeName}`).digest();
+  ix.discriminator = Array.from(sighash.slice(0, 8));
+  
   ix.accounts.forEach((acc: any) => {
     if (acc.isMut !== undefined) {
       acc.writable = acc.isMut;
     }
     if (acc.isSigner !== undefined) {
       acc.signer = acc.isSigner;
+    }
+    if (acc.isOptional !== undefined) {
+      acc.optional = acc.isOptional;
     }
   });
   ix.args.forEach((arg: any) => {

@@ -78,8 +78,12 @@ const BeneficiariesPanel: FC<BeneficiariesPanelProps> = ({ beneficiaries, onAdd,
             >
               <div className="p-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-xl flex-shrink-0">
-                    {beneficiary.avatar || '👤'}
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">
+                    {beneficiary.avatar?.startsWith('http') ? (
+                      <img src={beneficiary.avatar} alt={beneficiary.name || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      beneficiary.avatar || '👤'
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white">{beneficiary.name || 'Anonymous'}</p>

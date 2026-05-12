@@ -521,7 +521,7 @@ export async function buildCheckInTx(
     .accounts({
       signer,
       vault: vaultPda,
-      livenessDelegate: null, // Assume owner for now
+      livenessDelegate: null,
     })
     .instruction();
 

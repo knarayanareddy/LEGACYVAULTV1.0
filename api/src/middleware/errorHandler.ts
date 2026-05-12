@@ -18,6 +18,15 @@ export function errorHandler(
     });
   }
 
+  if (error.message === 'P2025' || error.code === 'P2025') {
+    return reply.code(404).send({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'The requested resource was not found.',
+      },
+    });
+  }
+
   const statusCode = error.statusCode || 500;
   const message = config.isProd && statusCode === 500
     ? 'Internal Server Error'

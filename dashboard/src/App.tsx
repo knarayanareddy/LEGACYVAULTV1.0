@@ -159,6 +159,7 @@ const PanelRenderer: FC<PanelProps> = ({ tab, tx }) => {
           onAdd={(params: any) => tx.execute('add-guardian', { vault: summary.data?.pubkey || vaultPubkey, ...params })}
           onRemove={(pubkey: string) => tx.execute('remove-guardian', { vault: summary.data?.pubkey || vaultPubkey, guardianWallet: pubkey })}
           onSetThreshold={(threshold) => tx.execute('set-guardian-threshold', { vault: summary.data?.pubkey || vaultPubkey, threshold })}
+          onAccept={(pubkey: string) => tx.execute('accept-guardian-invitation', { vault: summary.data?.pubkey || vaultPubkey, guardianWallet: pubkey })}
         />
       );
 
@@ -253,6 +254,18 @@ const App: FC = () => {
     }
   }, [connected, isAuthenticated, isSigningIn, signIn]);
 
+  // Auto-detect default vault if none selected
+  useEffect(() => {
+    if (connected && isAuthenticated && !vaultPubkey && walletPublicKey) {
+      // For MVP, auto-select nonce 0 vault
+      const [pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('vault'), walletPublicKey.toBuffer(), Buffer.from([0])],
+        new PublicKey(config.programId)
+      );
+      setVaultPubkey(pda.toBase58());
+    }
+  }, [connected, isAuthenticated, vaultPubkey, walletPublicKey, setVaultPubkey]);
+
   // Logout listener
   useEffect(() => {
     const handleLogout = () => {
@@ -335,11 +348,14 @@ const App: FC = () => {
               </div>
             </div>
           )}
-          {connected && isAuthenticated && !vaultPubkey && (
-            <NoVault onCreate={handleCreateVault} />
-          )}
-          {connected && isAuthenticated && vaultPubkey && (summary.data || summary.isLoading) && (
-            <PanelRenderer tab={activeTab} tx={tx} />
+          {connected && isAuthenticated && !isSigningIn && (
+            <>
+              {(summary.error as any)?.status === 404 || !vaultPubkey ? (
+                <NoVault onCreate={handleCreateVault} />
+              ) : (
+                <PanelRenderer tab={activeTab} tx={tx} />
+              )}
+            </>
           )}
         </div>
       </main>

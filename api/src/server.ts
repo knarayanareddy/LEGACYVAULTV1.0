@@ -99,7 +99,9 @@ export async function buildServer() {
   return fastify;
 }
 
-if (require.main === module) {
+const isEntryPoint = import.meta.url.includes('server.ts') || process.argv[1]?.includes('server.ts');
+
+if (isEntryPoint) {
   buildServer().then(async (fastify) => {
     try {
       await fastify.listen({ port: config.port, host: '0.0.0.0' });

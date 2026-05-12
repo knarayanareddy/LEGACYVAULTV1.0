@@ -12,6 +12,7 @@ interface GuardiansPanelProps {
   onAdd: (params: { guardianWallet: string; role: 'personal' | 'professional' | 'delegate' }) => void;
   onRemove: (pubkey: string) => void;
   onSetThreshold: (threshold: number) => void;
+  onAccept?: (pubkey: string) => void;
 }
 
 const roleColors: Record<string, string> = {
@@ -27,7 +28,7 @@ const statusColors: Record<string, string> = {
   removed: 'bg-rose-500/10 text-rose-400',
 };
 
-const GuardiansPanel: FC<GuardiansPanelProps> = ({ guardians, vaultStatus, onAdd, onRemove, onSetThreshold }) => {
+const GuardiansPanel: FC<GuardiansPanelProps> = ({ guardians, vaultStatus, onAdd, onRemove, onSetThreshold, onAccept }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newThreshold, setNewThreshold] = useState<number>(Math.ceil(guardians.length / 2) || 1);
@@ -112,8 +113,12 @@ const GuardiansPanel: FC<GuardiansPanelProps> = ({ guardians, vaultStatus, onAdd
             >
               <div className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-xl flex-shrink-0">
-                    {guardian.avatar || '👤'}
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">
+                    {guardian.avatar?.startsWith('http') ? (
+                      <img src={guardian.avatar} alt={guardian.name || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      guardian.avatar || '👤'
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -150,6 +155,16 @@ const GuardiansPanel: FC<GuardiansPanelProps> = ({ guardians, vaultStatus, onAdd
 
                 {isExpanded && (
                   <div className="mt-4 pt-4 border-t border-white/5 space-y-3 animate-scale-in">
+                    {guardian.status === 'pending' && onAccept && (
+                      <div className="flex justify-end mb-3">
+                        <button
+                          onClick={() => onAccept(guardian.pubkey)}
+                          className="px-3 py-1.5 rounded-lg bg-vault-500/20 text-vault-400 text-xs font-semibold hover:bg-vault-500/30 transition-colors"
+                        >
+                          Accept Invitation
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-400">Status</span>
                       <span className="text-xs text-slate-300 capitalize">{guardian.status}</span>

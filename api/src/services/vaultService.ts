@@ -59,11 +59,8 @@ function computeCheckInHealth(
 // Vault Summary
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function getVaultSummary(
-  vaultPubkey: string,
-  _walletPubkey: string
-): Promise<VaultSummaryResponse> {
-  const vault = await prisma.vault.findUniqueOrThrow({
+export async function ensureVaultExists(vaultPubkey: string): Promise<any> {
+  let vault = await prisma.vault.findUnique({
     where: { pubkey: vaultPubkey },
     include: {
       guardians: {
@@ -71,6 +68,49 @@ export async function getVaultSummary(
       },
     },
   });
+
+  if (!vault) {
+    console.log(`Vault ${vaultPubkey} not found in DB, attempting to sync from chain...`);
+    try {
+      const vaultAccount = await (program.account.vault as any).fetch(new PublicKey(vaultPubkey));
+      vault = await prisma.vault.create({
+        data: {
+          pubkey: vaultPubkey,
+          ownerPubkey: vaultAccount.owner.toString(),
+          status: Object.keys(vaultAccount.status)[0].toLowerCase(),
+          createdAt: BigInt(vaultAccount.createdAt.toString()),
+          lastCheckIn: BigInt(vaultAccount.lastCheckIn.toString()),
+          inactivityThreshold: BigInt(vaultAccount.inactivityThreshold.toString()),
+          timelockDuration: BigInt(vaultAccount.timelockDuration.toString()),
+          guardianThreshold: vaultAccount.guardianThreshold,
+          guardianCount: vaultAccount.guardianCount,
+          beneficiaryCount: vaultAccount.beneficiaryCount,
+          totalBps: vaultAccount.totalBps,
+          subscriptionTier: Object.keys(vaultAccount.subscriptionTier)[0].toLowerCase(),
+        },
+        include: {
+          guardians: {
+            where: { status: { in: ['active', 'pending'] } },
+          },
+        },
+      });
+      console.log(`Vault ${vaultPubkey} auto-indexed.`);
+    } catch (error) {
+      console.error(`Failed to auto-index vault ${vaultPubkey}:`, error);
+      return null;
+    }
+  }
+  return vault;
+}
+
+export async function getVaultSummary(
+  vaultPubkey: string,
+  _walletPubkey: string
+): Promise<VaultSummaryResponse> {
+  const vault = await ensureVaultExists(vaultPubkey);
+  if (!vault) {
+    throw new Error('P2025'); // Use Prisma-like code for "not found"
+  }
 
   const unlockSession = await prisma.unlockSession.findFirst({
     where: {
@@ -333,9 +373,7 @@ export async function getVaultBeneficiaries(
 export async function getLivenessSummary(
   vaultPubkey: string
 ): Promise<LivenessSummaryResponse> {
-  const vault = await prisma.vault.findUniqueOrThrow({
-    where: { pubkey: vaultPubkey },
-  });
+  const vault = await ensureVaultExists(vaultPubkey);
 
   const nowSec = Math.floor(Date.now() / 1000);
   const lastCheckIn = Number(vault.lastCheckIn);
@@ -402,9 +440,7 @@ export async function getDistributionState(
     orderBy: { initiatedAt: 'desc' },
   });
 
-  const vault = await prisma.vault.findUniqueOrThrow({
-    where: { pubkey: vaultPubkey },
-  });
+  const vault = await ensureVaultExists(vaultPubkey);
 
   const [vaultAuthPda] = findVaultAuthorityPda(new PublicKey(vaultPubkey));
 

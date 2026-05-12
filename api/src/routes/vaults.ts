@@ -12,8 +12,9 @@ async function resolveRole(
   wallet: string,
   vaultPubkey: string
 ): Promise<'owner' | 'guardian' | 'beneficiary' | 'viewer'> {
-  const vault = await prisma.vault.findUnique({ where: { pubkey: vaultPubkey } });
+  const vault = await vaultService.ensureVaultExists(vaultPubkey);
   if (!vault) return 'viewer';
+
   if (vault.ownerPubkey === wallet) return 'owner';
 
   const isGuardian = await prisma.guardian.findFirst({
