@@ -38,6 +38,7 @@ export function useVaultSummary(options: { enabled?: boolean } = {}) {
     vaultAddress:         query.data?.pubkey             ?? null,
     isLoading:  query.isLoading,
     isFetching: query.isFetching,
+    isSuccess:  query.isSuccess,
     error:      query.error,
     refetch:    query.refetch,
     data:       query.data,

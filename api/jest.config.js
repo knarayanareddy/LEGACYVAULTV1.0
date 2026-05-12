@@ -3,7 +3,6 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^nanoid$': 'nanoid/index.js',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {

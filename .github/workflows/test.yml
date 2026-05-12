@@ -17,9 +17,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libudev-dev pkg-config build-essential
 
-      - uses: solana-labs/setup-solana@v1
-        with:
-          solana-version: '1.18.26'
+      - name: Install Solana
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Setup Solana Keypair
         run: |
