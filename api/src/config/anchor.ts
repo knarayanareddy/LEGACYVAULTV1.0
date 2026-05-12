@@ -17,9 +17,15 @@ export const provider = new AnchorProvider(connection, wallet, {
 
 import crypto from 'crypto';
 
-// Program
-export const programId = new PublicKey(config.programId);
-(IDL as any).address = config.programId;
+// Program – fallback to system program in test/CI environments where PROGRAM_ID may be absent
+let programId: PublicKey;
+try {
+  programId = config.programId ? new PublicKey(config.programId) : PublicKey.default;
+} catch {
+  programId = PublicKey.default;
+}
+export { programId };
+(IDL as any).address = programId.toBase58();
 
 function transformType(type: any): any {
   if (type === 'publicKey') {

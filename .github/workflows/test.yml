@@ -22,7 +22,7 @@ jobs:
 
       - name: Install Solana
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
+          sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
           echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
       - name: Setup Solana Keypair
@@ -92,7 +92,7 @@ jobs:
           REDIS_URL: redis://localhost:6380
           JWT_SECRET: test-secret
           JWT_REFRESH_SECRET: test-refresh-secret
-          PROGRAM_ID: 11111111111111111111111111111111
+          PROGRAM_ID: "7vdXAgisK4CqAo7xgAQ2K5G8Tg6EiVhWrjToJWAWDoyH"
           SOLANA_RPC_ENDPOINT: http://localhost:8899
 
   frontend-tests:
